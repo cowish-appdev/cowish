@@ -3,13 +3,17 @@ import { TextInput, Button, StyleSheet } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import AddButton from "@/components/AddButton";
+import { router } from "expo-router";
+import { useRouter } from "expo-router";
 
 export default function AddPage() {
   const [code, setCode] = useState("");
 
+  const router = useRouter();
+
   const handleAdd = () => {
-    alert(`You entered: ${code}`);
-    // Later: confirm person or group, and apply tag
+    if (!code.trim()) return;
+    router.push(`/confirm?code=${code.trim()}`);
   };
 
   return (
@@ -24,6 +28,8 @@ export default function AddPage() {
         value={code}
         onChangeText={setCode}
         placeholderTextColor="#999"
+        returnKeyLabel="done"
+        onSubmitEditing={handleAdd}
       />
 
       <AddButton onPress={handleAdd} />
