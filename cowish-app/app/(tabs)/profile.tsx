@@ -1,15 +1,11 @@
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
 import { StyleSheet, View, Text } from "react-native";
 
 export default function ProfilePage() {
   return (
-    <View>
-      <Text>My Profile / Personal Wishlist</Text>
-    </View>
+    <ThemedView>
+      <ThemedText>My Profile / Personal Wishlist</ThemedText>
+    </ThemedView>
   );
 }
-
-const style = StyleSheet.create({
-  white: {
-    color: "white",
-  },
-});
