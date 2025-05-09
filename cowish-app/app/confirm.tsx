@@ -22,7 +22,7 @@ export default function ConfirmPage() {
       <ThemedText type="title">Added name here</ThemedText>
 
       <ThemedText style={{ marginTop: 20, marginBottom: 10 }}>
-        Choose tag (Hold to Confirm)
+        Choose Tag (Hold to Confirm)
       </ThemedText>
 
       <ThemedView style={styles.tagGrid}>

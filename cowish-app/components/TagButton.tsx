@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet, Animated, View } from "react-native";
-import { ThemedText } from "@/components/ThemedText";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 type TagButtonProps = {
   label: string;
@@ -19,23 +18,23 @@ export default function TagButton({
 }: TagButtonProps) {
   const progress = useRef(new Animated.Value(0)).current;
   const timeoutRef = useRef<number | null>(null);
+  const [isHolding, setIsHolding] = useState(false);
 
   const startHold = () => {
-    // Start fill animation
+    setIsHolding(true);
     Animated.timing(progress, {
       toValue: 1,
       duration: 1000,
       useNativeDriver: false,
     }).start();
 
-    // Trigger action after full hold
     timeoutRef.current = setTimeout(() => {
       onHoldConfirm?.();
     }, 1000);
   };
 
   const cancelHold = () => {
-    // Reset fill animation
+    setIsHolding(false);
     Animated.timing(progress, {
       toValue: 0,
       duration: 200,
@@ -49,12 +48,20 @@ export default function TagButton({
   };
 
   const borderColor = selected ? color : `${color}66`;
-  const textColor = selected ? "#fff" : color;
+
+  const textColor = selected
+    ? "#fff"
+    : progress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [color, "#fff"],
+      });
 
   const fillWidth = progress.interpolate({
     inputRange: [0, 1],
     outputRange: ["0%", "100%"],
   });
+
+  const fontWeight = selected || isHolding ? "600" : "400";
 
   return (
     <Pressable
@@ -75,12 +82,18 @@ export default function TagButton({
           ]}
         />
         {/* Text on top */}
-        <ThemedText
-          type="defaultSemiBold"
-          style={[styles.text, { color: textColor, zIndex: 1 }]}
+        <Animated.Text
+          style={[
+            styles.text,
+            {
+              color: textColor,
+              fontWeight: fontWeight,
+              zIndex: 1,
+            },
+          ]}
         >
           {label}
-        </ThemedText>
+        </Animated.Text>
       </View>
     </Pressable>
   );
@@ -97,8 +110,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    overflow: "hidden", // ⬅️ Important to keep fill inside
-    backgroundColor: "#ffffff00", // transparent background
+    overflow: "hidden",
+    backgroundColor: "#ffffff00",
   },
   text: {
     textAlign: "center",
