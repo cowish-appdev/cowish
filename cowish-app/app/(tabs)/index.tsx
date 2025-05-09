@@ -12,8 +12,19 @@ export default function AddPage() {
   const router = useRouter();
 
   const handleAdd = () => {
-    if (!code.trim()) return;
-    router.push(`/confirm?code=${code.trim()}`);
+    const trimmedCode = code.trim();
+    if (!trimmedCode) return;
+
+    const firstChar = trimmedCode.charAt(0).toLowerCase();
+    const length = trimmedCode.length;
+
+    if (firstChar === "g" && length === 7) {
+      router.push(`../confirm-group?code=${trimmedCode}`);
+    } else if (firstChar !== "g" && length === 6) {
+      router.push(`../confirm-individual?code=${trimmedCode}`);
+    } else {
+      alert("Invalid code format.");
+    }
   };
 
   return (

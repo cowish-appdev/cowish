@@ -1,13 +1,12 @@
-import { Pressable, StyleSheet } from "react-native";
-import { ThemedText } from "@/components/ThemedText";
-import { useRef } from "react";
+import { Pressable, StyleSheet, Animated, View } from "react-native";
+import { useRef, useState } from "react";
 
 type TagButtonProps = {
   label: string;
-  color: string; // main color for the tag
+  color: string;
   selected?: boolean;
   onPress: () => void;
-  onDoublePress?: () => void; // ✅ added support for double tap
+  onHoldConfirm?: () => void;
 };
 
 export default function TagButton({
@@ -15,64 +14,107 @@ export default function TagButton({
   color,
   selected = false,
   onPress,
-  onDoublePress,
+  onHoldConfirm,
 }: TagButtonProps) {
-  const lastTapRef = useRef<number>(0);
+  const progress = useRef(new Animated.Value(0)).current;
+  const timeoutRef = useRef<number | null>(null);
+  const [isHolding, setIsHolding] = useState(false);
 
-  const handlePress = () => {
-    const now = Date.now();
-    const DOUBLE_PRESS_DELAY = 300; // ms
+  const startHold = () => {
+    setIsHolding(true);
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: false,
+    }).start();
 
-    if (now - lastTapRef.current < DOUBLE_PRESS_DELAY) {
-      onDoublePress?.(); // ✅ double tap detected
-    } else {
-      onPress(); // ✅ single tap
-    }
-
-    lastTapRef.current = now;
+    timeoutRef.current = setTimeout(() => {
+      onHoldConfirm?.();
+    }, 1000);
   };
 
-  const backgroundColor = selected ? color : `${color}33`; // 33 = ~20% opacity
-  const borderColor = selected ? color : `${color}66`; // 66 = ~40% opacity
-  const textColor = selected ? "#fff" : color;
+  const cancelHold = () => {
+    setIsHolding(false);
+    Animated.timing(progress, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const borderColor = selected ? color : `${color}66`;
+
+  const textColor = selected
+    ? "#fff"
+    : progress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [color, "#fff"],
+      });
+
+  const fillWidth = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0%", "100%"],
+  });
+
+  const fontWeight = selected || isHolding ? "600" : "400";
 
   return (
     <Pressable
-      onPress={handlePress}
-      style={({ pressed }) => [
-        styles.button,
-        {
-          backgroundColor,
-          borderColor,
-        },
-        pressed && styles.pressed,
-      ]}
+      onPress={onPress}
+      onPressIn={startHold}
+      onPressOut={cancelHold}
+      style={styles.wrapper}
     >
-      <ThemedText
-        type="defaultSemiBold"
-        style={[styles.text, { color: textColor }]}
-      >
-        {label}
-      </ThemedText>
+      <View style={[styles.button, { borderColor }]}>
+        {/* Fill bar */}
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: color,
+              width: fillWidth,
+            },
+          ]}
+        />
+        {/* Text on top */}
+        <Animated.Text
+          style={[
+            styles.text,
+            {
+              color: textColor,
+              fontWeight: fontWeight,
+              zIndex: 1,
+            },
+          ]}
+        >
+          {label}
+        </Animated.Text>
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    margin: 8,
+  },
   button: {
     width: 150,
     height: 50,
     borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
-    margin: 8,
     borderWidth: 2,
+    overflow: "hidden",
+    backgroundColor: "#ffffff00",
   },
   text: {
     textAlign: "center",
     fontSize: 14,
-  },
-  pressed: {
-    opacity: 0.85,
   },
 });
