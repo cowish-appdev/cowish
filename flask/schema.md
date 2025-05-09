@@ -33,7 +33,7 @@ owner_group_id varchar(7) from groups(id)
 
 ---one of the owners must be null---
 
-## 5. wishlist_items
+## 5. wishlists_items
 item_id     serial* not null
 wishlist_id serial not null
 name        text not null
@@ -43,7 +43,7 @@ create_at   timestamp default now()
 completed   boolean not null
 completed_at    timestamp default now()
 
-## 6. relationships
+## 6. relationship
 user_id1    text  from users(uuid) not null
 user_id2    text  from users(uuis) not null
 tag         text  not null
