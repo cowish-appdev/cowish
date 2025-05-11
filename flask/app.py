@@ -179,7 +179,7 @@ def create_users():
     }), 201
 
 
-#Update user
+# Update user
 @app.route('/users/<string:uuid>', methods=['PUT'])
 def update_user(uuid):
     data = request.get_json()
@@ -215,13 +215,27 @@ def update_user(uuid):
         ''',
         (username, profile_pic, uuid)
     )
-
     conn.commit()
+
+    # Fetch updated user
+    cursor.execute('SELECT uuid, username, email, code, profile_pic, create_at, update_at FROM users WHERE uuid = %s;', (uuid,))
+    updated_user = cursor.fetchone()
+
     cursor.close()
     conn.close()
 
-    return jsonify({'message': 'User updated successfully'})
-
+    return jsonify({
+        'message': 'User updated successfully',
+        'updated_user': {
+            'uuid': updated_user[0],
+            'username': updated_user[1],
+            'email': updated_user[2],
+            'code': updated_user[3],
+            'profile_pic': updated_user[4],
+            'create_at': updated_user[5],
+            'update_at': updated_user[6],
+        }
+    }), 200
 
 
 # Delete a user
