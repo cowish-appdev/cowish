@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,14 +10,31 @@ import {
   Modal,
   TextInput,
 } from "react-native";
-import { router } from "expo-router";
+import { router,useLocalSearchParams } from "expo-router";
 import WishlistItem from "@/components/WishListItem";
 import { Background } from "@react-navigation/elements";
+import { User } from "@/interface";
+import getUserById from "@/components/getUserById";
+import imageMap from "@/assets/imageMap";
 
 export default function ProfileScreen() {
+  //temporary
+  const { uuid } = useLocalSearchParams();
+  const userUUID = Array.isArray(uuid) ? uuid[0] : uuid ?? '';
+  //
   const theme = useColorScheme();
   const background = theme === "dark" ? "#1e1e1e" : "#ffffff";
   const textColor = theme === "dark" ? "#e1e1e1" : "#000000";
+  const [user,setUser] = useState<User|null>(null);
+  const profilePic = user && user.profile_pic ? imageMap[user.profile_pic]||require('@/assets/images/default.jpg'):require('@/assets/images/default.jpg');
+
+  useEffect(()=>{
+    if (userUUID) {
+      getUserById(userUUID, setUser);
+    }
+  }, [userUUID]);
+  //const currentUUID = getCurrentUserUUID();
+//getUserById(currentUUID, setUser);
 
   const [wishlist, setWishlist] = useState([
     { name: "Whiskey Stones", desc: "Reusable ice cubes", completed: false },
@@ -42,18 +59,20 @@ export default function ProfileScreen() {
       <View style={styles.leftColumn}>
         {/* Profile Card */}
         <View style={[styles.card, { backgroundColor: background }]}>
-          <Text style={[styles.name, { color: textColor }]}>Sami Rahman</Text>
+          <Text style={[styles.name, { color: textColor }]}>
+            {user?.username ?? 'Sami Rahman'}
+          </Text>
           <Image
-            source={{ uri: "https://i.pravatar.cc/300" }}
+            source={profilePic}
             style={styles.profileImage}
             resizeMode="cover"
           />
           <Text style={[styles.email, { color: textColor }]}>
-            sami.rahman002@gmail.com
+            { user?.email ?? 'sahi.rahman@gmail.com'}
           </Text>
           <TouchableOpacity
             style={styles.editButton}
-            onPress={() => router.push("/EditProfile")}
+            onPress={() => router.push(`/EditProfile?uuid=${userUUID}`)}
           >
             <Text style={styles.editText}>Edit Profile</Text>
           </TouchableOpacity>
@@ -64,7 +83,7 @@ export default function ProfileScreen() {
           <Text style={[styles.cardTitle, { color: textColor }]}>
             Your Share Code
           </Text>
-          <Text style={[styles.codeText, { color: textColor }]}>G123456</Text>
+          <Text style={[styles.codeText, { color: textColor }]}>{user?.code ?? '######'}</Text>
         </View>
       </View>
 
@@ -178,6 +197,7 @@ const styles = StyleSheet.create({
   },
   profileImage: {
     width: "85%",
+    height:"50%",
     aspectRatio: 1,
     borderRadius: 16,
     marginBottom: 16,

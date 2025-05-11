@@ -1,6 +1,12 @@
 import React, { useState, useRef } from 'react';
-
+import { useRouter } from 'expo-router';
+import { auth, provider } from '../firebase';
+import { signInWithPopup } from 'firebase/auth';
+import { useUser } from '../_layout';
+import addUser from '@/components/addUser';
 export default function LogInPage() {
+  const { setUserAcc } = useUser();
+  const router = useRouter();
   const [isAnimating, setIsAnimating] = useState(false);
   const fillRef = useRef(null);
 
@@ -19,8 +25,26 @@ export default function LogInPage() {
       fillRef.current.style.transition = 'none';
       fillRef.current.style.width = '0%';
     }, 3000);
+    handleLogin();
   };
+  const handleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
 
+      console.log("User Info:", user);
+      addUser(user.uid, user.displayName ?? 'no-name',user.email??'none','dog1',setUserAcc)
+      /*setUserAcc({
+        uuid: user.uid,
+        username: user.displayName ?? 'no-name',
+        email: user.email ?? 'no-email',
+      })*/
+      // After login success, navigate to (tabs)
+      router.replace("/(tabs)"); // (optional) force redirect to tabs
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+  };
   return (
     <div
       style={{
@@ -79,7 +103,7 @@ export default function LogInPage() {
       </h1>
 
       {/* Login button */}
-      <div
+      /*<div
         onClick={handleClick}
         style={{
           position: 'relative',
