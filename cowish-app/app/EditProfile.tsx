@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
   View,
@@ -10,8 +10,13 @@ import {
   StyleSheet,
   useColorScheme,
 } from "react-native";
+import imageMap from "@/assets/imageMap";
+import { User } from "@/interface";
+import updateProfile from "@/components/updateProfile";
 
-const images = [
+const { uuid } = useLocalSearchParams();
+const userUUID = Array.isArray(uuid) ? uuid[0] : uuid ?? '';
+const images = Object.values(imageMap)/*[
   require("../assets/images/dog1.jpg"),
   require("../assets/images/dog2.jpeg"),
   require("../assets/images/dog3.jpg"),
@@ -19,7 +24,8 @@ const images = [
   //   require("../assets/images/dog5.jpg"),
 
   // Add more avatar images if available
-];
+];*/
+const keys = Object.keys(imageMap)
 
 export default function EditProfile() {
   const [name, setName] = useState("");
@@ -27,10 +33,12 @@ export default function EditProfile() {
   const theme = useColorScheme();
   const backgroundColor = theme === "dark" ? "#1e1e1e" : "#ffffff";
   const textColor = theme === "dark" ? "#e1e1e1" : "#000000";
-
+  const keyImg: string| undefined = Object.keys(imageMap).find(k => imageMap[k] === selectedImage)
   const handleSave = () => {
     // TODO: Save name and selectedImage to your database
-    router.replace("/(tabs)/profile");
+    updateProfile(userUUID,name,keyImg);
+    console.log(userUUID)
+    router.replace(`/(tabs)/profile?uuid=${userUUID}`);
   };
 
   return (
