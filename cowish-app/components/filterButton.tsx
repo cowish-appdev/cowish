@@ -1,28 +1,46 @@
-import { useState } from 'react';
-import { View, Pressable, Text } from 'react-native';
-import { ThemedView } from './ThemedView';
-import { ThemedText } from './ThemedText';
+import { useState } from "react";
+import { View, Pressable, Text } from "react-native";
+import { ThemedView } from "./ThemedView";
+import { ThemedText } from "./ThemedText";
 
-const filters = ['All', 'Friends', 'Family', 'Coworkers', 'Significant Other'];
+const filters = ["All", "Friends", "Family", "Coworkers", "Significant Other"];
 
-export default function FilterTabs() {
-  const [selected, setSelected] = useState('All');
+export default function FilterTabs({
+  selected,
+  onSelect,
+}: {
+  selected: string;
+  onSelect: (val: string) => void;
+}) {
+  const filters = [
+    "All",
+    "Friends",
+    "Family",
+    "Coworkers",
+    "Significant Other",
+  ];
 
   return (
-    <ThemedView style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 16, padding:5}}>
+    <ThemedView
+      style={{
+        flexDirection: "row",
+        flexWrap: "wrap",
+        justifyContent: "center",
+      }}
+    >
       {filters.map((filter) => (
         <Pressable
           key={filter}
-          onPress={() => setSelected(filter)}
+          onPress={() => onSelect(filter)}
           style={{
             paddingHorizontal: 16,
             paddingVertical: 8,
             borderRadius: 20,
-            backgroundColor: selected === filter ? '#4F46E5' : '#E5E7EB',
-            marginHorizontal: 4,
+            backgroundColor: selected === filter ? "#4F46E5" : "#E5E7EB",
+            margin: 4,
           }}
         >
-          <ThemedText style={{ color: selected === filter ? 'white' : 'black', fontWeight: '500' }}>
+          <ThemedText style={{ color: selected === filter ? "#fff" : "#000" }}>
             {filter}
           </ThemedText>
         </Pressable>
