@@ -660,59 +660,6 @@ def get_group_wishlists(group_id):
     else:
         return jsonify({"error": "No wishlists found for this group"}), 404
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Get all wishlist items
 @app.route('/wishlists_items', methods=['GET'])
 def get_wishlist_items():
