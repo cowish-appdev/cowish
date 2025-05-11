@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,32 +13,25 @@ import {
 import imageMap from "@/assets/imageMap";
 import { User } from "@/interface";
 import updateProfile from "@/components/updateProfile";
-
-const { uuid } = useLocalSearchParams();
-const userUUID = Array.isArray(uuid) ? uuid[0] : uuid ?? '';
-const images = Object.values(imageMap)/*[
-  require("../assets/images/dog1.jpg"),
-  require("../assets/images/dog2.jpeg"),
-  require("../assets/images/dog3.jpg"),
-  //   require("../assets/images/dog4.jpg"),
-  //   require("../assets/images/dog5.jpg"),
-
-  // Add more avatar images if available
-];*/
-const keys = Object.keys(imageMap)
+import { useUser } from "./_layout";
+import getUserById from "@/components/getUserById";
 
 export default function EditProfile() {
+  const images = Object.values(imageMap)
+  const keys = Object.keys(imageMap)
+  const {userAcc, setUserAcc} = useUser()
+  const [user,setUser] = useState<User|null>(null)
   const [name, setName] = useState("");
   const [selectedImage, setSelectedImage] = useState(images[0]);
   const theme = useColorScheme();
   const backgroundColor = theme === "dark" ? "#1e1e1e" : "#ffffff";
   const textColor = theme === "dark" ? "#e1e1e1" : "#000000";
   const keyImg: string| undefined = Object.keys(imageMap).find(k => imageMap[k] === selectedImage)
+  
   const handleSave = () => {
     // TODO: Save name and selectedImage to your database
-    updateProfile(userUUID,name,keyImg);
-    console.log(userUUID)
-    router.replace(`/(tabs)/profile?uuid=${userUUID}`);
+    updateProfile(userAcc?.uuid ?? '',name,keyImg);
+    router.replace(`/(tabs)/profile`);
   };
 
   return (

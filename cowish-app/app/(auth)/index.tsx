@@ -103,7 +103,7 @@ export default function LogInPage() {
       </h1>
 
       {/* Login button */}
-      /*<div
+      <div
         onClick={handleClick}
         style={{
           position: 'relative',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,25 +16,16 @@ import { Background } from "@react-navigation/elements";
 import { User } from "@/interface";
 import getUserById from "@/components/getUserById";
 import imageMap from "@/assets/imageMap";
+import { useUser } from "../_layout";
 
 export default function ProfileScreen() {
-  //temporary
-  const { uuid } = useLocalSearchParams();
-  const userUUID = Array.isArray(uuid) ? uuid[0] : uuid ?? '';
-  //
+  const { userAcc, setUserAcc} = useUser()
+
   const theme = useColorScheme();
   const background = theme === "dark" ? "#1e1e1e" : "#ffffff";
   const textColor = theme === "dark" ? "#e1e1e1" : "#000000";
   const [user,setUser] = useState<User|null>(null);
-  const profilePic = user && user.profile_pic ? imageMap[user.profile_pic]||require('@/assets/images/default.jpg'):require('@/assets/images/default.jpg');
-
-  useEffect(()=>{
-    if (userUUID) {
-      getUserById(userUUID, setUser);
-    }
-  }, [userUUID]);
-  //const currentUUID = getCurrentUserUUID();
-//getUserById(currentUUID, setUser);
+  const profilePic = user && user?.profile_pic ? imageMap[user?.profile_pic]||require('@/assets/images/default.jpg'):require('@/assets/images/default.jpg');
 
   const [wishlist, setWishlist] = useState([
     { name: "Whiskey Stones", desc: "Reusable ice cubes", completed: false },
@@ -52,6 +43,9 @@ export default function ProfileScreen() {
   const [newItemName, setNewItemName] = useState("");
   const [newItemDesc, setNewItemDesc] = useState("");
 
+  useEffect(()=>{
+    getUserById(userAcc?.uuid?? '',setUser)
+  })
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* Left Column */}
@@ -60,7 +54,7 @@ export default function ProfileScreen() {
         {/* Profile Card */}
         <View style={[styles.card, { backgroundColor: background }]}>
           <Text style={[styles.name, { color: textColor }]}>
-            {user?.username ?? 'Sami Rahman'}
+            {user?.username ?? ''}
           </Text>
           <Image
             source={profilePic}
@@ -68,11 +62,11 @@ export default function ProfileScreen() {
             resizeMode="cover"
           />
           <Text style={[styles.email, { color: textColor }]}>
-            { user?.email ?? 'sahi.rahman@gmail.com'}
+            { user?.email ?? ''}
           </Text>
           <TouchableOpacity
             style={styles.editButton}
-            onPress={() => router.push(`/EditProfile?uuid=${userUUID}`)}
+            onPress={() => router.push(`/EditProfile`)}
           >
             <Text style={styles.editText}>Edit Profile</Text>
           </TouchableOpacity>

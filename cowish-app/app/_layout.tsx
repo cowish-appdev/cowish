@@ -60,17 +60,21 @@ export default function RootLayout() {
   }
 
   return (
-    <UserContext.Provider value = {{userAcc,setUserAcc}}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <UserContext.Provider value = {{userAcc,setUserAcc}}>{
+<ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <Stack screenOptions={{ headerShown: false }}>
           {userAcc ? (
-            <Stack.Screen name="(tabs)" />
+            <>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="EditProfile"/>
+            </>
           ) : (
             <Stack.Screen name="(auth)" />
           )}
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>
+    }
     </UserContext.Provider>
   );
 }
