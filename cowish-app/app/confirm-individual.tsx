@@ -10,6 +10,7 @@ import { Ionicons } from "@expo/vector-icons";
 import getUserByCode from '@/components/getUserByCode';
 import { User } from "@/interface";
 import imageMap from "@/assets/imageMap";
+import { useUser } from './_layout';
 export default function ConfirmPage() {
   const { code } = useLocalSearchParams();
   const userCode = Array.isArray(code) ? code[0] : code ?? '';
@@ -18,9 +19,10 @@ export default function ConfirmPage() {
   const [showPopup, setShowPopup] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const profilePic = user && user.profile_pic ? imageMap[user.profile_pic]||require('@/assets/images/default.jpg'):require('@/assets/images/default.jpg');
+  const { userAcc, setUserAcc} = useUser()
 
   useEffect(()=>{
-    getUserByCode(userCode,setUser)
+    getUserByCode(userAcc?.uuid ?? '',setUser)
   },[userCode]);
 
   const tags = [

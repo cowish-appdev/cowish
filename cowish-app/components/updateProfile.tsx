@@ -20,9 +20,11 @@ export default function updateProfile(uuid:string,username?:string|null,profile_
           });
       
           const result = await response.json();
+          
       
           if (response.ok) {
             console.log('User updated:', result);
+            return(result.updated_user)
           } else {
             console.error('Error updating user:', result);
           }
@@ -31,6 +33,6 @@ export default function updateProfile(uuid:string,username?:string|null,profile_
           console.error('Fetch error:', error);
         }
     }
-    updateUser(uuid,username,profile_pic)
+    return updateUser(uuid,username,profile_pic)
 
 }

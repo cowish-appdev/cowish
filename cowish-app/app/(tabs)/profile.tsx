@@ -18,14 +18,14 @@ import getUserById from "@/components/getUserById";
 import imageMap from "@/assets/imageMap";
 import { useUser } from "../_layout";
 
+
 export default function ProfileScreen() {
   const { userAcc, setUserAcc} = useUser()
-
+  const[loading,setLoading] = useState(true);
   const theme = useColorScheme();
   const background = theme === "dark" ? "#1e1e1e" : "#ffffff";
   const textColor = theme === "dark" ? "#e1e1e1" : "#000000";
-  const [user,setUser] = useState<User|null>(null);
-  const profilePic = user && user?.profile_pic ? imageMap[user?.profile_pic]||require('@/assets/images/default.jpg'):require('@/assets/images/default.jpg');
+  const profilePic = userAcc && userAcc?.profile_pic ? imageMap[userAcc?.profile_pic]||require('@/assets/images/default.jpg'):require('@/assets/images/default.jpg');
 
   const [wishlist, setWishlist] = useState([
     { name: "Whiskey Stones", desc: "Reusable ice cubes", completed: false },
@@ -42,19 +42,26 @@ export default function ProfileScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [newItemName, setNewItemName] = useState("");
   const [newItemDesc, setNewItemDesc] = useState("");
-
+  
+  
   useEffect(()=>{
-    getUserById(userAcc?.uuid?? '',setUser)
-  })
+    if(userAcc){
+      setLoading(false)
+    }
+  },[userAcc])
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View>{
+      loading ? (
+        <Text>Loading...</Text>
+      ) : 
+      <ScrollView contentContainerStyle={styles.container}>
       {/* Left Column */}
 
       <View style={styles.leftColumn}>
         {/* Profile Card */}
         <View style={[styles.card, { backgroundColor: background }]}>
           <Text style={[styles.name, { color: textColor }]}>
-            {user?.username ?? ''}
+            {userAcc?.username ?? ''}
           </Text>
           <Image
             source={profilePic}
@@ -62,7 +69,7 @@ export default function ProfileScreen() {
             resizeMode="cover"
           />
           <Text style={[styles.email, { color: textColor }]}>
-            { user?.email ?? ''}
+            { userAcc?.email ?? ''}
           </Text>
           <TouchableOpacity
             style={styles.editButton}
@@ -77,7 +84,7 @@ export default function ProfileScreen() {
           <Text style={[styles.cardTitle, { color: textColor }]}>
             Your Share Code
           </Text>
-          <Text style={[styles.codeText, { color: textColor }]}>{user?.code ?? '######'}</Text>
+          <Text style={[styles.codeText, { color: textColor }]}>{userAcc?.code ?? '######'}</Text>
         </View>
       </View>
 
@@ -162,6 +169,8 @@ export default function ProfileScreen() {
         </View>
       </Modal>
     </ScrollView>
+    }
+    </View>
   );
 }
 

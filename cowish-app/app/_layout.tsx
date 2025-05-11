@@ -7,7 +7,7 @@ import { useFonts } from "expo-font";
 import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useState, useEffect, createContext, useContext,ReactNode } from "react";
+import React, { useState, useEffect, createContext, useContext,ReactNode } from "react";
 import "react-native-reanimated";
 import { Slot, useRouter } from "expo-router";
 import { View, ActivityIndicator } from "react-native";
@@ -16,6 +16,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { User, onAuthStateChanged} from "firebase/auth";
 import { auth } from "./firebase";
 import { User as user} from "@/interface";
+import getUserById from "@/components/getUserById";
 
 
 
@@ -23,7 +24,7 @@ SplashScreen.preventAutoHideAsync();
 
 type UserContextType = {
   userAcc: user | null;
-  setUserAcc: (user: user | null) => void;
+  setUserAcc: React.Dispatch<React.SetStateAction<user | null>>;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -45,11 +46,12 @@ export default function RootLayout() {
 
   const [User, setUser] = useState<User|null |undefined>(undefined); // Replace with real auth state
   const [userAcc, setUserAcc] = useState<user|null>(null);
+  const[refreshPage,setRefreshPage] = useState(0);
 
   // Simulate checking auth status (replace with real listener)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: User|null)=>{
-      setUser(firebaseUser);
+      getUserById(firebaseUser?.uid ?? '',setUserAcc)
       SplashScreen.hideAsync();
     })
     return unsubscribe;
@@ -67,6 +69,8 @@ export default function RootLayout() {
             <>
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="EditProfile"/>
+              <Stack.Screen name="confirm-group"/>
+              <Stack.Screen name="confirm-individual"/>
             </>
           ) : (
             <Stack.Screen name="(auth)" />

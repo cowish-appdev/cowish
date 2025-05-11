@@ -19,18 +19,23 @@ import getUserById from "@/components/getUserById";
 export default function EditProfile() {
   const images = Object.values(imageMap)
   const keys = Object.keys(imageMap)
-  const {userAcc, setUserAcc} = useUser()
-  const [user,setUser] = useState<User|null>(null)
+  const { userAcc, setUserAcc} = useUser()
+  const[loading,setLoading] = useState(true);
   const [name, setName] = useState("");
   const [selectedImage, setSelectedImage] = useState(images[0]);
   const theme = useColorScheme();
   const backgroundColor = theme === "dark" ? "#1e1e1e" : "#ffffff";
   const textColor = theme === "dark" ? "#e1e1e1" : "#000000";
   const keyImg: string| undefined = Object.keys(imageMap).find(k => imageMap[k] === selectedImage)
-  
-  const handleSave = () => {
+  useEffect(() => {
+    if (userAcc) {
+      setLoading(false); // When user data is available, stop loading
+    }
+  }, [userAcc]);
+  const handleSave = async () => {
     // TODO: Save name and selectedImage to your database
-    updateProfile(userAcc?.uuid ?? '',name,keyImg);
+    const updated = await updateProfile(userAcc?.uuid ?? '',name,keyImg);
+    setUserAcc(updated)
     router.replace(`/(tabs)/profile`);
   };
 
