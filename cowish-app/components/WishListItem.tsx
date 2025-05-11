@@ -1,17 +1,47 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Pressable,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
-export default function WishlistItem({ item, onDelete, theme }: any) {
+export default function WishlistItem({ item, onDelete, onToggle, theme }: any) {
   const textColor = theme === "dark" ? "#e1e1e1" : "#000000";
   const descColor = theme === "dark" ? "#aaa" : "#555";
   const bgColor = theme === "dark" ? "#2c2c2c" : "#f0f0f0";
 
   return (
     <View style={[styles.container, { backgroundColor: bgColor }]}>
+      {/* Checkbox */}
+      <Pressable onPress={onToggle} style={styles.checkbox}>
+        {item.completed ? (
+          <Ionicons name="checkbox" size={20} color="#4CAF50" />
+        ) : (
+          <Ionicons name="square-outline" size={20} color={textColor} />
+        )}
+      </Pressable>
+
+      {/* Texts */}
       <View style={styles.textBlock}>
-        <Text style={[styles.name, { color: textColor }]}>{item.name}</Text>
+        <Text
+          style={[
+            styles.name,
+            {
+              color: textColor,
+              textDecorationLine: item.completed ? "line-through" : "none",
+              opacity: item.completed ? 0.6 : 1,
+            },
+          ]}
+        >
+          {item.name}
+        </Text>
         <Text style={[styles.desc, { color: descColor }]}>{item.desc}</Text>
       </View>
+
+      {/* Delete */}
       <TouchableOpacity onPress={onDelete}>
         <Text style={styles.deleteIcon}>✕</Text>
       </TouchableOpacity>
@@ -27,6 +57,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  checkbox: {
+    marginRight: 10,
   },
   textBlock: {
     flex: 1,

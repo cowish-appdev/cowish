@@ -7,6 +7,8 @@ import {
   useColorScheme,
   TouchableOpacity,
   ScrollView,
+  Modal,
+  TextInput,
 } from "react-native";
 import { router } from "expo-router";
 import WishlistItem from "@/components/WishListItem";
@@ -18,14 +20,25 @@ export default function ProfileScreen() {
   const textColor = theme === "dark" ? "#e1e1e1" : "#000000";
 
   const [wishlist, setWishlist] = useState([
-    { name: "Whiskey Stones", desc: "Reusable ice cubes" },
-    { name: "Tom Ford Oud Wood", desc: "Luxury fragrance" },
-    { name: "Codenames Game", desc: "Fun party game" },
+    { name: "Whiskey Stones", desc: "Reusable ice cubes", completed: false },
+    { name: "Tom Ford Oud Wood", desc: "Luxury fragrance", completed: false },
+    { name: "Codenames Game", desc: "Fun party game", completed: false },
   ]);
+  const handleToggleComplete = (index: number) => {
+    setWishlist((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, completed: !item.completed } : item
+      )
+    );
+  };
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemDesc, setNewItemDesc] = useState("");
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* Left Column */}
+
       <View style={styles.leftColumn}>
         {/* Profile Card */}
         <View style={[styles.card, { backgroundColor: background }]}>
@@ -70,14 +83,71 @@ export default function ProfileScreen() {
               onDelete={() =>
                 setWishlist((prev) => prev.filter((_, i) => i !== index))
               }
+              onToggle={() => handleToggleComplete(index)}
             />
           ))}
 
-          <TouchableOpacity style={styles.addButton}>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setModalVisible(true)}
+          >
             <Text style={styles.addText}>+ Add Item</Text>
           </TouchableOpacity>
         </View>
       </View>
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Item</Text>
+
+            <TextInput
+              placeholder="Item name"
+              style={styles.input}
+              value={newItemName}
+              onChangeText={setNewItemName}
+            />
+            <TextInput
+              placeholder="Description"
+              style={[styles.input, { height: 80 }]}
+              value={newItemDesc}
+              onChangeText={setNewItemDesc}
+              multiline
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={() => {
+                  if (newItemName.trim()) {
+                    setWishlist((prev) => [
+                      ...prev,
+                      {
+                        name: newItemName,
+                        desc: newItemDesc,
+                        completed: false,
+                      },
+                    ]);
+                    setNewItemName("");
+                    setNewItemDesc("");
+                    setModalVisible(false);
+                  }
+                }}
+              >
+                <Text style={styles.saveText}>Save</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -185,5 +255,58 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#FF6B81",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalContent: {
+    width: "85%",
+    backgroundColor: "#1e1e1e",
+    padding: 20,
+    borderRadius: 16,
+    elevation: 5,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 12,
+    color: "#e1e1e1",
+  },
+
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 12,
+    color: "#e1e1e1",
+  },
+
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  saveButton: {
+    backgroundColor: "#ffa500",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+
+  saveText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+
+  cancelText: {
+    color: "#888",
+    paddingHorizontal: 12,
   },
 });
