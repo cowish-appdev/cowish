@@ -97,12 +97,13 @@ def get_user_by_code(code):
     else:
         return jsonify({'error': 'User not found'}), 404
     
-# Create new user
 import random
 import string
+
 def generate_unique_code(length=6):
     """Generate a random 6-character alphanumeric code."""
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
 @app.route('/users', methods=['POST'])
 def create_users():
     data = request.get_json()
@@ -110,17 +111,14 @@ def create_users():
     if not data:
         return jsonify({"error": "Request body must not be empty"}), 400
 
-    # Normalize input to a list
-    if isinstance(data, dict):
-        users = [data]  # Single user
-    elif isinstance(data, list):
-        users = data    # Multiple users
-    else:
+    users = [data] if isinstance(data, dict) else data if isinstance(data, list) else None
+    if users is None:
         return jsonify({"error": "Invalid input format"}), 400
 
-    inserted_users = []
     conn = get_db_connection()
     cursor = conn.cursor()
+    inserted_users = []
+    existing_users = []
 
     for user in users:
         uuid = user.get('uuid')
@@ -131,8 +129,35 @@ def create_users():
         if not uuid or not username or not email:
             return jsonify({"error": "uuid, username, and email are required"}), 400
 
-        # Generate 6-character unique code
-        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        # Check if user exists
+        cursor.execute("SELECT uuid, username, email, code, create_at, update_at, profile_pic FROM users WHERE uuid = %s", (uuid,))
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            user_data = {
+                "uuid": existing_user[0],
+                "username": existing_user[1],
+                "email": existing_user[2],
+                "code": existing_user[3],
+                "create_at": existing_user[4],
+                "update_at": existing_user[5],
+                "profile_pic": existing_user[6],
+            }
+
+            if isinstance(data, dict):  # single user request
+                cursor.close()
+                conn.close()
+                return jsonify({"message": "User already exists", "user": user_data}), 200
+            else:
+                existing_users.append(user_data)
+                continue
+
+        # Generate unique 6-character code
+        while True:
+            code = generate_unique_code()
+            cursor.execute("SELECT 1 FROM users WHERE code = %s", (code,))
+            if not cursor.fetchone():
+                break
 
         cursor.execute(
             '''
@@ -142,14 +167,16 @@ def create_users():
             ''',
             (uuid, username, email, code, profile_pic)
         )
-        inserted_uuid = cursor.fetchone()[0]
-        inserted_users.append(inserted_uuid)
+        inserted_users.append(cursor.fetchone()[0])
 
     conn.commit()
     cursor.close()
     conn.close()
 
-    return jsonify({"inserted_users": inserted_users}), 201
+    return jsonify({
+        "inserted_users": inserted_users,
+        "existing_users": existing_users if existing_users else None
+    }), 201
 
 
 #Update user

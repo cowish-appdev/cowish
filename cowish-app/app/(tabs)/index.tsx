@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import React from 'react';
 import { TextInput, Button, StyleSheet } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -10,11 +11,7 @@ export default function AddPage() {
   const [code, setCode] = useState("");
 
   const router = useRouter();
-  console.log("heelo");
-  useEffect(() => {
-    console.log("Hello");
-  });
-
+ 
   const handleAdd = () => {
     const trimmedCode = code.trim();
     if (!trimmedCode) return;

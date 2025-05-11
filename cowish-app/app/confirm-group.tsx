@@ -3,14 +3,22 @@ import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { StyleSheet, Animated, View, Easing } from "react-native";
 import TagButton from "@/components/TagButton";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { Groups } from "@/interface";
+import getGroupByCode from "@/components/getGroupByCode";
 
 export default function ConfirmGroupPage() {
   const { code } = useLocalSearchParams();
+  const groupCode = Array.isArray(code) ? code[0] : code ?? '';
+  const [group,setGroup] = useState<Groups|null>(null);
   const [isSelected, setIsSelected] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(()=>{
+    getGroupByCode(groupCode,setGroup)
+  },[groupCode])
 
   const handleHoldConfirm = () => {
     setIsSelected(true);
