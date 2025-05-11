@@ -1,8 +1,8 @@
 import psycopg2
 from flask import Flask, request, jsonify
-
+from flask_cors import CORS
 app = Flask(__name__)
-
+CORS(app)
 # Database connection parameters
 DB_HOST = 'yamabiko.proxy.rlwy.net'
 DB_PORT = '11814'
@@ -662,178 +662,275 @@ def get_group_wishlists(group_id):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Get all wishlist items
-@app.route('/wishlists_items', methods=['GET'])
-def get_wishlist_items():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM wishlists_items;')
-    items = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    items_list = [
-        {
-           'item_id': item[0],
-            'wishlist_id': item[1],
-            'name': item[2],
-            'description': item[3],
-            'url': item[4],
-            'create_at': item[5],
-            'completed': item[6],
-            'completed_at': item[7]
-        }
-        for item in items
-    ]
-    return jsonify(items)
-# Get a single wishlist item by ID
-@app.route('/wishlists_items/<int:item_id>', methods=['GET'])
-def get_wishlist_item(item_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM wishlists_items WHERE item_id = %s;', (item_id,))
-    item = cursor.fetchone()
-    cursor.close()
-    conn.close()
-
-    if item:
-        return jsonify({
-            'item_id': item[0],
-            'wishlist_id': item[1],
-            'name': item[2],
-            'description': item[3],
-            'url': item[4],
-            'create_at': item[5],
-            'completed': item[6],
-            'completed_at': item[7]
-        })
-    return jsonify({'error': 'Item not found'}), 404
-
-# Add a new wishlist item
-@app.route('/wishlists_items', methods=['POST'])
-def create_wishlist_item():
+#create wishlist_items
+@app.route("/wishlists_items", methods=["POST"])
+def create_wishlists_items():
     data = request.get_json()
-    wishlist_id = data.get('wishlist_id')
-    name = data.get('name')
-    description = data.get('description')
-    url = data.get('url')
-    completed = data.get('completed', False)
 
-    if not wishlist_id or not name:
-        return jsonify({"error": "wishlist_id and name are required"}), 400
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        '''
-        INSERT INTO wishlists_items (wishlist_id, name, description, url, completed)
-        VALUES (%s, %s, %s, %s, %s) RETURNING item_id;
-        ''',
-        (wishlist_id, name, description, url, completed)
-    )
-    item_id = cursor.fetchone()[0]
-    conn.commit()
-    cursor.close()
-    conn.close()
+        # Ensure it's a list for unified processing
+        items = data if isinstance(data, list) else [data]
 
-    return jsonify({'item_id': item_id, 'name': name}), 201
+        for item in items:
+            wishlist_id = item.get("wishlist_id")
+            name = item.get("name")
+            description = item.get("description", None)
+            url = item.get("url", None)
+            completed = item.get("completed")
 
-# Update a wishlist item
-@app.route('/wishlists_items/<int:item_id>', methods=['PUT'])
+            if not all([wishlist_id, name, completed is not None]):
+                return jsonify({"error": "Missing required fields"}), 400
+
+            cur.execute(
+                """
+                INSERT INTO wishlists_items (wishlist_id, name, description, url, completed)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (wishlist_id, name, description, url, completed)
+            )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({"message": f"{len(items)} item(s) added to wishlists_items"}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+#get all wishlists_items
+@app.route("/wishlists_items", methods=["GET"])
+def get_all_wishlists_items():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("SELECT * FROM wishlists_items")
+        items = cur.fetchall()
+
+        columns = [desc[0] for desc in cur.description]
+        results = [dict(zip(columns, row)) for row in items]
+
+        cur.close()
+        conn.close()
+
+        return jsonify(results), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Get a single wishlist item by ID
+@app.route("/wishlists_items/item/<int:item_id>", methods=["GET"])
+def get_wishlist_item_by_id(item_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("SELECT * FROM wishlists_items WHERE item_id = %s", (item_id,))
+        row = cur.fetchone()
+
+        if row is None:
+            return jsonify({"error": "Item not found"}), 404
+
+        columns = [desc[0] for desc in cur.description]
+        result = dict(zip(columns, row))
+
+        cur.close()
+        conn.close()
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+#get wishlists_items by wishlist_id
+@app.route("/wishlists_items/wishlist/<int:wishlist_id>", methods=["GET"])
+def get_items_by_wishlist_id(wishlist_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("SELECT * FROM wishlists_items WHERE wishlist_id = %s", (wishlist_id,))
+        items = cur.fetchall()
+
+        columns = [desc[0] for desc in cur.description]
+        results = [dict(zip(columns, row)) for row in items]
+
+        cur.close()
+        conn.close()
+
+        return jsonify(results), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+#updated name and description of wishlist_items based on item_id
+@app.route("/wishlists_items/<int:item_id>", methods=["PUT"])
 def update_wishlist_item(item_id):
     data = request.get_json()
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM wishlists_items WHERE item_id = %s;', (item_id,))
-    item = cursor.fetchone()
+    name = data.get("name")
+    description = data.get("description")
 
-    if not item:
-        return jsonify({'error': 'Item not found'}), 404
+    if name is None and description is None:
+        return jsonify({"error": "At least one of 'name' or 'description' must be provided"}), 400
 
-    name = data.get('name', item[2])
-    description = data.get('description', item[3])
-    url = data.get('url', item[4])
-    completed = data.get('completed', item[6])
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-    cursor.execute(
-        '''
-        UPDATE wishlist_items
-        SET name = %s, description = %s, url = %s, completed = %s
-        WHERE item_id = %s;
-        ''',
-        (name, description, url, completed, item_id)
-    )
+        update_fields = []
+        update_values = []
 
-    conn.commit()
-    cursor.close()
-    conn.close()
+        if name is not None:
+            update_fields.append("name = %s")
+            update_values.append(name)
+        if description is not None:
+            update_fields.append("description = %s")
+            update_values.append(description)
 
-    return jsonify({'message': 'Item updated successfully'})
+        update_values.append(item_id)
 
-# Delete a wishlist item
-@app.route('/wishlists_items/<int:item_id>', methods=['DELETE'])
+        query = f"""
+            UPDATE wishlists_items
+            SET {', '.join(update_fields)}
+            WHERE item_id = %s
+            RETURNING *;
+        """
+
+        cur.execute(query, update_values)
+        updated_item = cur.fetchone()
+
+        if updated_item is None:
+            return jsonify({"error": "Item not found"}), 404
+
+        columns = [desc[0] for desc in cur.description]
+        result = dict(zip(columns, updated_item))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+#Delete wishlists_items based on item_id
+@app.route("/wishlists_items/<int:item_id>", methods=["DELETE"])
 def delete_wishlist_item(item_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('DELETE FROM wishlists_items WHERE item_id = %s;', (item_id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-    return jsonify({'message': 'Item deleted successfully'})
+        # Check if the item exists
+        cur.execute("SELECT * FROM wishlists_items WHERE item_id = %s;", (item_id,))
+        item = cur.fetchone()
+
+        if item is None:
+            return jsonify({"error": "Item not found"}), 404
+
+        # Delete the item
+        cur.execute("DELETE FROM wishlists_items WHERE item_id = %s;", (item_id,))
+        conn.commit()
+
+        cur.close()
+        conn.close()
+
+        return jsonify({"message": f"Item with item_id {item_id} has been deleted."}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+#Create relationships
+@app.route('/relationships', methods=['POST'])
+def create_relationships():
+    data = request.get_json()
+
+    if isinstance(data, dict):
+        data = [data]
+
+    valid_tags = ['friend', 'family', 'coworker', 'significant-other']
+    inserted = []
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        for entry in data:
+            user_id1 = entry.get('user_id1')
+            user_id2 = entry.get('user_id2')
+            tag = entry.get('tag')
+
+            if not user_id1 or not user_id2 or not tag:
+                return jsonify({'error': 'user_id1, user_id2, and tag are required'}), 400
+
+            if tag not in valid_tags:
+                return jsonify({'error': f"Invalid tag. Must be one of {valid_tags}"}), 400
+
+            if user_id1 == user_id2:
+                return jsonify({'error': 'user_id1 and user_id2 must be different'}), 400
+
+            cur.execute("""
+                INSERT INTO relationship (user_id1, user_id2, tag)
+                VALUES (%s, %s, %s)
+                ON CONFLICT DO NOTHING
+                RETURNING user_id1, user_id2, tag, created_at;
+            """, (user_id1, user_id2, tag))
+
+            result = cur.fetchone()
+            if result:
+                inserted.append({
+                    'user_id1': result[0],
+                    'user_id2': result[1],
+                    'tag': result[2],
+                    'created_at': result[3]
+                })
+
+        conn.commit()
+        return jsonify({'inserted': inserted}), 201
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cur.close()
+        conn.close()
+
+# Get relationships by user_id1
+@app.route('/relationships/user/<user_id1>', methods=['GET'])
+def get_relationships_by_user_id1(user_id1):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT user_id2, tag, created_at
+            FROM relationship
+            WHERE user_id1 = %s
+        """, (user_id1,))
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        relationships = []
+        for row in rows:
+            relationships.append({
+                "user_id2": row[0],
+                "tag": row[1],
+                "created_at": row[2]
+            })
+
+        return jsonify(relationships), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Run the app
 if __name__ == '__main__':
     app.run(debug=True)
+
