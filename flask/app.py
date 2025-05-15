@@ -96,7 +96,7 @@ def get_user_by_code(code):
         return jsonify(user_data)
     else:
         return jsonify({'error': 'User not found'}), 404
-    
+#Create users  
 import random
 import string
 
@@ -305,15 +305,19 @@ def get_group(group_id):
 # Create a new group
 import random
 import string
+
 def generate_group_id():
     return 'g' + ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+
 @app.route('/groups', methods=['POST'])
 def create_groups():
     data = request.get_json()
 
-    # Ensure the data is a list of groups
-    if not isinstance(data, list):
-        return jsonify({"error": "Request body must be a list of groups"}), 400
+    # Accept both single object and list
+    if isinstance(data, dict):
+        data = [data]
+    elif not isinstance(data, list):
+        return jsonify({"error": "Invalid request body format"}), 400
 
     # Check if each group has a name (profile_pic is optional)
     for group in data:
@@ -364,6 +368,7 @@ def create_groups():
 
     return jsonify({'message': 'Groups created successfully', 'created_groups': created_groups}), 201
 
+
 # Update a group
 @app.route('/groups/<string:id>', methods=['PUT'])
 def update_group(id):
@@ -371,17 +376,13 @@ def update_group(id):
 
     # Only allow updates for 'name' and 'profile_pic'
     allowed_keys = ['name', 'profile_pic']
-    
-    # Check if any other keys are in the request data
     invalid_keys = [key for key in data.keys() if key not in allowed_keys]
-    
+
     if invalid_keys:
-        return jsonify({'error': f"Invalid keys: {', '.join(invalid_keys)}. Only 'name' and 'profile_pic' can be updated."}), 400
+        return jsonify({
+            'error': f"Invalid keys: {', '.join(invalid_keys)}. Only 'name' and 'profile_pic' can be updated."
+        }), 400
 
-    name = data.get('name')
-    profile_pic = data.get('profile_pic')
-
-    # Connect to the database
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -390,9 +391,15 @@ def update_group(id):
     group = cursor.fetchone()
 
     if not group:
+        cursor.close()
+        conn.close()
         return jsonify({'error': 'Group not found'}), 404
 
-    # Update the group details
+    # Use existing values if not provided
+    name = data.get('name', group[1])
+    profile_pic = data.get('profile_pic', group[2])
+
+    # Update group
     cursor.execute(
         '''
         UPDATE groups
@@ -403,10 +410,24 @@ def update_group(id):
     )
 
     conn.commit()
+
+    # Fetch updated group
+    cursor.execute('SELECT * FROM groups WHERE id = %s;', (id,))
+    updated_group = cursor.fetchone()
+
     cursor.close()
     conn.close()
 
-    return jsonify({'message': 'Group updated successfully'})
+    return jsonify({
+        'message': 'Group updated successfully',
+        'updated_group': {
+            'id': updated_group[0],
+            'name': updated_group[1],
+            'profile_pic': updated_group[2],
+            'created_at': updated_group[3]
+        }
+    })
+
 
 # Delete a group
 @app.route('/groups', methods=['DELETE'])
@@ -429,56 +450,71 @@ def delete_all_groups():
 def add_users_to_group():
     data = request.get_json()
 
-    # If it's a single object
+    # Normalize to list
     if isinstance(data, dict):
-        data = [data]  # Convert single entry to a list for uniform processing
+        data = [data]
 
+    # Validate input
     if not all('group_id' in entry and 'user_id' in entry for entry in data):
         return jsonify({"error": "Each entry must have 'group_id' and 'user_id'"}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Prepare for batch insertions
     insert_values = []
-    for entry in data:
-        group_id = entry.get('group_id')
-        user_id = entry.get('user_id')
+    inserted = []
+    skipped = []
 
-        # Check if the group exists
-        cursor.execute('SELECT * FROM groups WHERE id = %s;', (group_id,))
-        group = cursor.fetchone()
-        if not group:
+    for entry in data:
+        group_id = entry['group_id']
+        user_id = entry['user_id']
+
+        # Check group exists
+        cursor.execute('SELECT 1 FROM groups WHERE id = %s;', (group_id,))
+        if not cursor.fetchone():
             cursor.close()
             conn.close()
             return jsonify({"error": f"Group {group_id} not found"}), 404
 
-        # Check if the user exists
-        cursor.execute('SELECT * FROM users WHERE uuid = %s;', (user_id,))
-        user = cursor.fetchone()
-        if not user:
+        # Check user exists
+        cursor.execute('SELECT 1 FROM users WHERE uuid = %s;', (user_id,))
+        if not cursor.fetchone():
             cursor.close()
             conn.close()
             return jsonify({"error": f"User {user_id} not found"}), 404
 
-        # Prepare data for insertion
-        insert_values.append((group_id, user_id))
+        # Check for existing entry
+        cursor.execute('''
+            SELECT 1 FROM group_members WHERE group_id = %s AND user_id = %s;
+        ''', (group_id, user_id))
+        if cursor.fetchone():
+            skipped.append({"group_id": group_id, "user_id": user_id, "status": "already exists"})
+        else:
+            insert_values.append((group_id, user_id))
+            inserted.append({"group_id": group_id, "user_id": user_id})
 
-    # Insert data into group_members table
     try:
-        cursor.executemany('''
-            INSERT INTO group_members (group_id, user_id)
-            VALUES (%s, %s);
-        ''', insert_values)
-        conn.commit()
+        if insert_values:
+            cursor.executemany('''
+                INSERT INTO group_members (group_id, user_id)
+                VALUES (%s, %s);
+            ''', insert_values)
+            conn.commit()
+
         cursor.close()
         conn.close()
 
-        return jsonify({"message": "Users added to the group(s) successfully"}), 201
+        return jsonify({
+            "inserted": inserted,
+            "skipped": skipped,
+            "message": "Group members processed successfully"
+        }), 201
+
     except Exception as e:
         cursor.close()
         conn.close()
         return jsonify({"error": str(e)}), 500
+
 
 # input group_id and get all users in that group
 @app.route('/group_members/inputgroup_id/<string:group_id>', methods=['GET'])
@@ -540,13 +576,14 @@ def create_user_wishlists():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    inserted_ids = []
+    inserted_data = []
 
     for item in wishlists:
         cursor.execute(
             '''
             INSERT INTO wishlists (title, description, owner_user_id)
-            VALUES (%s, %s, %s) RETURNING id;
+            VALUES (%s, %s, %s)
+            RETURNING id, title, description, owner_user_id, owner_group_id;
             ''',
             (
                 item.get('title'),
@@ -554,7 +591,7 @@ def create_user_wishlists():
                 item.get('owner_user_id')
             )
         )
-        inserted_ids.append(cursor.fetchone()[0])
+        inserted_data.append(cursor.fetchone())
 
     conn.commit()
     cursor.close()
@@ -562,8 +599,9 @@ def create_user_wishlists():
 
     return jsonify({
         "message": "User-owned wishlist(s) created successfully",
-        "wishlist_ids": inserted_ids
+        "wishlists": inserted_data
     }), 201
+
 
 # Create Group-owned wishlists
 @app.route('/wishlists/group', methods=['POST'])
@@ -583,13 +621,14 @@ def create_group_wishlists():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    inserted_ids = []
+    inserted = []
 
     for item in wishlists:
         cursor.execute(
             '''
             INSERT INTO wishlists (title, description, owner_group_id)
-            VALUES (%s, %s, %s) RETURNING id;
+            VALUES (%s, %s, %s)
+            RETURNING id, title, description, owner_user_id, owner_group_id;
             ''',
             (
                 item.get('title'),
@@ -597,7 +636,7 @@ def create_group_wishlists():
                 item.get('owner_group_id')
             )
         )
-        inserted_ids.append(cursor.fetchone()[0])
+        inserted.append(cursor.fetchone())
 
     conn.commit()
     cursor.close()
@@ -605,8 +644,17 @@ def create_group_wishlists():
 
     return jsonify({
         "message": "Group-owned wishlist(s) created successfully",
-        "wishlist_ids": inserted_ids
+        "wishlists": [
+            {
+                "id": row[0],
+                "title": row[1],
+                "description": row[2],
+                "owner_user_id": row[3],
+                "owner_group_id": row[4]
+            } for row in inserted
+        ]
     }), 201
+
 
 # Get all wishlists
 
@@ -703,7 +751,7 @@ def get_group_wishlists(group_id):
 
 
 
-#create wishlist_items
+# Create wishlist_items
 @app.route("/wishlists_items", methods=["POST"])
 def create_wishlists_items():
     data = request.get_json()
@@ -715,33 +763,49 @@ def create_wishlists_items():
         # Ensure it's a list for unified processing
         items = data if isinstance(data, list) else [data]
 
+        inserted_items = []
+
         for item in items:
             wishlist_id = item.get("wishlist_id")
             name = item.get("name")
-            description = item.get("description", None)
-            url = item.get("url", None)
+            description = item.get("description")
+            url = item.get("url")
             completed = item.get("completed")
 
-            if not all([wishlist_id, name, completed is not None]):
-                return jsonify({"error": "Missing required fields"}), 400
+            if not wishlist_id or not name or completed is None:
+                return jsonify({"error": "Each item must have 'wishlist_id', 'name', and 'completed'"}), 400
 
             cur.execute(
                 """
                 INSERT INTO wishlists_items (wishlist_id, name, description, url, completed)
                 VALUES (%s, %s, %s, %s, %s)
+                RETURNING item_id;
                 """,
                 (wishlist_id, name, description, url, completed)
             )
+
+            inserted_id = cur.fetchone()[0]
+            inserted_items.append({
+                "item_id": inserted_id,
+                "wishlist_id": wishlist_id,
+                "name": name,
+                "description": description,
+                "url": url,
+                "completed": completed
+            })
 
         conn.commit()
         cur.close()
         conn.close()
 
-        return jsonify({"message": f"{len(items)} item(s) added to wishlists_items"}), 201
+        return jsonify({
+            "message": f"{len(inserted_items)} item(s) added to wishlists_items",
+            "items": inserted_items
+        }), 201
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+    
 #get all wishlists_items
 @app.route("/wishlists_items", methods=["GET"])
 def get_all_wishlists_items():
@@ -759,30 +823,6 @@ def get_all_wishlists_items():
         conn.close()
 
         return jsonify(results), 200
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# Get a single wishlist item by ID
-@app.route("/wishlists_items/item/<int:item_id>", methods=["GET"])
-def get_wishlist_item_by_id(item_id):
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        cur.execute("SELECT * FROM wishlists_items WHERE item_id = %s", (item_id,))
-        row = cur.fetchone()
-
-        if row is None:
-            return jsonify({"error": "Item not found"}), 404
-
-        columns = [desc[0] for desc in cur.description]
-        result = dict(zip(columns, row))
-
-        cur.close()
-        conn.close()
-
-        return jsonify(result), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -808,9 +848,7 @@ def get_items_by_wishlist_id(wishlist_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-#updated name and description of wishlist_items based on item_id
-@app.route("/wishlists_items/<int:item_id>", methods=["PUT"])
+@app.route("/wishlists_items/itemid/<int:item_id>", methods=["PUT"])
 def update_wishlist_item(item_id):
     data = request.get_json()
 
@@ -861,6 +899,9 @@ def update_wishlist_item(item_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+
+
 #Delete wishlists_items based on item_id
 @app.route("/wishlists_items/<int:item_id>", methods=["DELETE"])
 def delete_wishlist_item(item_id):
@@ -886,7 +927,6 @@ def delete_wishlist_item(item_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 #Create relationships
 @app.route('/relationships', methods=['POST'])
