@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import React from 'react';
+import React from "react";
 import { TextInput, Button, StyleSheet } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -11,7 +11,7 @@ export default function AddPage() {
   const [code, setCode] = useState("");
 
   const router = useRouter();
- 
+
   const handleAdd = () => {
     const trimmedCode = code.trim();
     if (!trimmedCode) return;
@@ -21,7 +21,7 @@ export default function AddPage() {
 
     if (firstChar === "g" && length === 7) {
       router.push(`../confirm-group?code=${trimmedCode}`);
-    } else if (firstChar !== "g" && length === 6) {
+    } else if (length === 6) {
       router.push(`../confirm-individual?code=${trimmedCode}`);
     } else {
       alert("Invalid code format.");
