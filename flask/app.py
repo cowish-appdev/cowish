@@ -1,4 +1,5 @@
 import psycopg2
+import psycopg2.extras
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 app = Flask(__name__)
@@ -72,7 +73,59 @@ def get_user(uuid):
             'update_at': user[5],
             'profile_pic': user[6]
         })
-    return jsonify({'error': 'User not found'}), 404
+    return jsonify({'error': 'User not found','response':[]}), 404
+@app.route('/get-users-wishlist-info',methods=["POST"])
+def users_wishlist_info():
+    data = request.get_json()
+    if not isinstance(data, list) or len(data)==0:
+        return jsonify({"error":"No UUIDs provided"}),200
+    uuid_tag_map = {entry["friend_id"]: entry["tag"] for entry in data if "friend_id" in entry and "tag" in entry}
+    uuid_list = list(uuid_tag_map.keys())
+    if len(uuid_list)==0:
+        return jsonify({"error":"Invalid input format"}),400
+    conn = get_db_connection()
+    with conn.cursor(cursor_factory = psycopg2.extras.DictCursor) as cursor:
+        sql = """SELECT
+    u.uuid AS friend_id,
+    u.username,
+    u.profile_pic,
+    w.id AS wishlist_id,
+    (
+        SELECT COUNT(*)
+        FROM wishlists_items wi
+        WHERE wi.wishlist_id = w.id
+    ) AS item_count
+    FROM users u
+    JOIN(
+        SELECT DISTINCT ON (owner_user_id) *
+        FROM wishlists
+        ORDER BY owner_user_id, id ASC
+    ) w ON w.owner_user_id = u.uuid
+    WHERE u.uuid = ANY(%s)"""
+        cursor.execute(sql, (uuid_list,))
+        rows = cursor.fetchall()
+        conn.commit()
+        cursor.close()
+        conn.close()
+        results = []
+        for row in rows:
+            tag = uuid_tag_map.get(row["friend_id"],"")
+            results.append({
+            "friend_id": row["friend_id"],
+            "username":row["username"],
+            "profile_pic":row["profile_pic"],
+            "wishlist_id": row["wishlist_id"],
+            "item_count":row["item_count"],
+            "tag":tag
+            })
+        if len(results) > 0:
+            return jsonify(results),200
+        else:
+            return jsonify({"message":"No matching users found",
+                        "result":[]},200)
+
+
+    
 # Get a single user by code
 @app.route('/users/code/<string:code>', methods=['GET'])
 def get_user_by_code(code):
@@ -564,7 +617,7 @@ def create_user_wishlists():
     data = request.get_json()
     if not data:
         return jsonify({"error": "No input data provided"}), 400
-
+    user_id = data.get("owner_user_id")
     is_list = isinstance(data, list)
     wishlists = data if is_list else [data]
 
@@ -576,6 +629,13 @@ def create_user_wishlists():
 
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    cursor.execute('SELECT id FROM wishlists WHERE owner_user_id = %s',(user_id,))
+    existing = cursor.fetchone()
+
+    if existing:
+        return jsonify({"wishlists": existing})
+    
     inserted_data = []
 
     for item in wishlists:
@@ -696,12 +756,12 @@ def get_user_wishlists(user_id):
         ''',
         (user_id,)
     )
-    wishlists = cursor.fetchall()
+    wishlist = cursor.fetchone()
     cursor.close()
     conn.close()
 
-    if wishlists:
-        return jsonify([
+    if wishlist:
+        return jsonify(
             {
                 'id': wishlist[0],
                 'title': wishlist[1],
@@ -710,8 +770,7 @@ def get_user_wishlists(user_id):
                 'owner_group_id': wishlist[4],
         
             }
-            for wishlist in wishlists
-        ])
+        ),200
     else:
         return jsonify({"error": "No wishlists found for this user"}), 404
 
@@ -749,8 +808,35 @@ def get_group_wishlists(group_id):
     else:
         return jsonify({"error": "No wishlists found for this group"}), 404
 
+# get wishlist by id
+@app.route('/wishlists/wishlist/<string:wishlist_id>', methods=['GET'])
+def get_wishlist_by_id(wishlist_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
+    cursor.execute(
+        '''
+        SELECT * FROM wishlists WHERE id = %s;
+        ''',
+        (wishlist_id,)
+    )
+    wishlist = cursor.fetchone()
+    cursor.close()
+    conn.close()
 
+    if wishlist:
+        return jsonify(
+            {
+                'id': wishlist[0],
+                'title': wishlist[1],
+                'description': wishlist[2],
+                'owner_user_id': wishlist[3],
+                'owner_group_id': wishlist[4],
+        
+            }
+        )
+    else:
+        return jsonify({"error": "No wishlists found for this user"}), 404
 # Create wishlist_items
 @app.route("/wishlists_items", methods=["POST"])
 def create_wishlists_items():
@@ -854,8 +940,9 @@ def update_wishlist_item(item_id):
 
     name = data.get("name")
     description = data.get("description")
+    completed = data.get("completed")
 
-    if name is None and description is None:
+    if name is None and description is None and completed is None:
         return jsonify({"error": "At least one of 'name' or 'description' must be provided"}), 400
 
     try:
@@ -871,6 +958,9 @@ def update_wishlist_item(item_id):
         if description is not None:
             update_fields.append("description = %s")
             update_values.append(description)
+        if completed is not None:
+            update_fields.append("completed = %s")
+            update_values.append(completed)
 
         update_values.append(item_id)
 
@@ -991,7 +1081,7 @@ def get_relationships_by_user_id1(user_id1):
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-            SELECT user_id2, tag, created_at
+            SELECT user_id2 AS friend_id, tag, created_at
             FROM relationship
             WHERE user_id1 = %s
         """, (user_id1,))
@@ -1002,7 +1092,7 @@ def get_relationships_by_user_id1(user_id1):
         relationships = []
         for row in rows:
             relationships.append({
-                "user_id2": row[0],
+                "friend_id": row[0],
                 "tag": row[1],
                 "created_at": row[2]
             })

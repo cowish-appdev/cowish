@@ -11,7 +11,11 @@ import getUserByCode from '@/components/getUserByCode';
 import { User } from "@/interface";
 import imageMap from "@/assets/imageMap";
 import { useUser } from './_layout';
+import addRelationship from '@/components/addRelationship';
+
 export default function ConfirmPage() {
+  const { userAcc, setUserAcc} = useUser()
+  const[loading,setLoading] = useState(true);
   const { code } = useLocalSearchParams();
   const userCode = Array.isArray(code) ? code[0] : code ?? '';
   const [user, setUser] = useState<User|null>(null);
@@ -19,21 +23,19 @@ export default function ConfirmPage() {
   const [showPopup, setShowPopup] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const profilePic = user && user.profile_pic ? imageMap[user.profile_pic]||require('@/assets/images/default.jpg'):require('@/assets/images/default.jpg');
-  const { userAcc, setUserAcc} = useUser()
 
-  useEffect(()=>{
-    getUserByCode(userAcc?.uuid ?? '',setUser)
-  },[userCode]);
 
   const tags = [
-    { label: "Friend", color: "#0a7ea4" },
-    { label: "Family", color: "#2ecc71" },
-    { label: "Co-worker", color: "#e67300" },
-    { label: "Significant Other", color: "#d6336c" },
+    { label: "Friend", color: "#0a7ea4",value:"friend"},
+    { label: "Family", color: "#2ecc71",value:"family" },
+    { label: "Co-worker", color: "#e67300",value:"coworker" },
+    { label: "Significant Other", color: "#d6336c",value:"significant-other" },
   ];
+  
 
   const handleHoldConfirm = (label: string) => {
     setSelectedTag(label);
+    addRelationship(userAcc?.uuid??'',user?.uuid??'',label)
     setShowPopup(true);
 
     Animated.timing(fadeAnim, {
@@ -55,10 +57,18 @@ export default function ConfirmPage() {
     }, 2000);
     
   };
-
+  useEffect(()=>{
+      if(userAcc){
+        setLoading(false)
+      }
+    },[userAcc])
+  useEffect(()=>{
+    getUserByCode(userCode, setUser)
+  },[])
   return (
     <ThemedView style={styles.container}>
 
+      <ThemedText>{userAcc?.username}</ThemedText>
       <ThemedText type="title">{user ? user.username: ''}</ThemedText>
       { user && (
         <Image
@@ -76,9 +86,9 @@ export default function ConfirmPage() {
             key={tag.label}
             label={tag.label}
             color={tag.color}
-            selected={selectedTag === tag.label}
-            onPress={() => setSelectedTag(tag.label)}
-            onHoldConfirm={() => handleHoldConfirm(tag.label)}
+            selected={selectedTag === tag.value}
+            onPress={() => setSelectedTag(tag.value)}
+            onHoldConfirm={() => handleHoldConfirm(tag.value)}
           />
         ))}
       </ThemedView>

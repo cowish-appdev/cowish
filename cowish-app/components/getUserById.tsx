@@ -1,6 +1,6 @@
 
-export default function getUserByCode(id:string,setUser:Function){
-    const getUserByCode = async(id:string,setUser:Function)=>{
+export default function getUserById(id:string,setUser:Function){
+    const getUserById = async(id:string,setUser:Function)=>{
         try {
             const response = await fetch(`http://127.0.0.1:5000/users/${id}`)
             console.log(response.ok)
@@ -15,5 +15,5 @@ export default function getUserByCode(id:string,setUser:Function){
             throw error;
         }
     }
-    getUserByCode(id,setUser)
+    getUserById(id,setUser)
 }

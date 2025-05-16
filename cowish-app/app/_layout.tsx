@@ -71,6 +71,7 @@ export default function RootLayout() {
               <Stack.Screen name="EditProfile"/>
               <Stack.Screen name="confirm-group"/>
               <Stack.Screen name="confirm-individual"/>
+              <Stack.Screen name="wishlist/[id]"/>
             </>
           ) : (
             <Stack.Screen name="(auth)" />

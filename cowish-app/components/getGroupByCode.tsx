@@ -2,7 +2,7 @@
 export default function getGroupByCode(code:string,setGroup:Function){
     const getGroupByCode = async(code:string,setGroup:Function)=>{
         try {
-            const response = await fetch(`http://127.0.0.1:5000/groups/code/${code}`)
+            const response = await fetch(`http://127.0.0.1:5000/groups/${code}`)
             console.log(response.ok)
             if(!response.ok){
                 throw new Error('Network responser was not ok');

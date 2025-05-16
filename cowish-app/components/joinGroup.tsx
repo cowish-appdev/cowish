@@ -1,17 +1,16 @@
 
-export default function addRelationship(user1:string,user2:string,tag:string){
-    const addRelationship = async(user1:string,user2:string, tag:string)=>{
+export default function joinGroup(group_id:string,user_id:string){
+    const addRelationship = async(group_id:string,user_id:string)=>{
         try {
-            const response = await fetch(`http://127.0.0.1:5000/relationships`,
+            const response = await fetch(`http://127.0.0.1:5000/group_members`,
                 {
                     method:'POST',
                     headers:{
                         'Content-Type':'application/json',
                     },
                     body:JSON.stringify({
-                        user_id1:user1,
-                        user_id2:user2,
-                        tag:tag,
+                        group_id:group_id,
+                        user_id:user_id,
                     })
                 })
             console.log(response.ok)
@@ -25,5 +24,5 @@ export default function addRelationship(user1:string,user2:string,tag:string){
             throw error;
         }
     }
-    addRelationship(user1,user2,tag)
+    addRelationship(group_id,user_id)
 }

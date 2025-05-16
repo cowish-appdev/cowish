@@ -4,17 +4,24 @@ import { ThemedText } from "@/components/ThemedText";
 import { StyleSheet, Animated, View, Easing } from "react-native";
 import TagButton from "@/components/TagButton";
 import { useState, useRef, useEffect } from "react";
+import { Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Groups } from "@/interface";
 import getGroupByCode from "@/components/getGroupByCode";
+import { useUser } from "./_layout";
+import joinGroup from "@/components/joinGroup";
+import imageMap from "@/assets/imageMap";
 
 export default function ConfirmGroupPage() {
+  const { userAcc, setUserAcc} = useUser()
+  const[loading,setLoading] = useState(true);
   const { code } = useLocalSearchParams();
   const groupCode = Array.isArray(code) ? code[0] : code ?? '';
   const [group,setGroup] = useState<Groups|null>(null);
   const [isSelected, setIsSelected] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const profilePic = group && group.profile_pic ? imageMap[group.profile_pic]||require('@/assets/images/default.jpg'):require('@/assets/images/default.jpg');
 
   useEffect(()=>{
     getGroupByCode(groupCode,setGroup)
@@ -22,6 +29,7 @@ export default function ConfirmGroupPage() {
 
   const handleHoldConfirm = () => {
     setIsSelected(true);
+    joinGroup(groupCode,userAcc?.uuid??'')
     setShowPopup(true);
 
     Animated.timing(fadeAnim, {
@@ -45,8 +53,13 @@ export default function ConfirmGroupPage() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Added Group name here</ThemedText>
-      <ThemedText style={{ marginBottom: 40 }}>add photo</ThemedText>
+      <ThemedText type="title">{group?.name?? ''}</ThemedText>
+      { group && (
+              <Image
+                source={profilePic} 
+                style={styles.profileImage}
+              />
+            )}
 
       <TagButton
         label="Join"
@@ -61,7 +74,7 @@ export default function ConfirmGroupPage() {
         <Animated.View style={[styles.popup, { opacity: fadeAnim }]}>
           <Ionicons name="checkmark-circle" size={28} color="#2ecc71" />
           <ThemedText type="subtitle" style={{ marginLeft: 5, color: "#000" }}>
-            You've joined the group!
+            {userAcc?.username} joined the group!
           </ThemedText>
         </Animated.View>
       )}
@@ -95,5 +108,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     color: "black",
+  },
+  profileImage: {
+    width: 100,  // Set width
+    height: 100, // Set height
+    borderRadius: 50,  // To make it circular
+    marginTop: 10,  // Add some space below the text
   },
 });
