@@ -19,6 +19,7 @@ import getWishlist from "@/components/getWishlist";
 import getUserById from "@/components/getUserById";
 import { User } from "@/interface";
 import imageMap from "@/assets/imageMap";
+import checkOffItem from "@/components/checkOffItem";
 const screenWidth = Dimensions.get("window").width;
 
 
@@ -84,14 +85,24 @@ export default function WishlistPage() {
   const profilePic = ownerInfo && ownerInfo.profile_pic ? imageMap[ownerInfo.profile_pic]||require('@/assets/images/default.jpg'):require('@/assets/images/default.jpg');
 
 
-  const toggleCheckbox = (itemId: string) => {
-    setWishlistItems((prev) =>
+  const toggleCheckbox = async (item: WishlistItems) => {
+      await checkOffItem(item.item_id, item.completed)
+        if (Wishlist && Wishlist.id) {
+          // Refetch updated items
+          await getWishlistItems(Wishlist.id, (data: WishlistItems[]) => {
+            setWishlistItems(data.sort((a,b)=>{
+              if(a.completed!=b.completed){ return a.completed?1:-1}
+              return a.name.localeCompare(b.name)
+            }));
+          });
+      };
+    }
+    /*setWishlistItems((prev) =>
       prev.map((item) =>
         item.item_id === itemId ? { ...item, completed: !item.completed } : item
       )
-    );
+    );*/
 
-  };
 
 
   
@@ -153,7 +164,7 @@ export default function WishlistPage() {
             <View style={styles.checkboxContainer}>
               <Checkbox
                 checked={item.completed}
-                onPress={() => toggleCheckbox(item.item_id)}
+                onPress={() => toggleCheckbox(item)}
                 darkMode={isDark}
               />
             </View>

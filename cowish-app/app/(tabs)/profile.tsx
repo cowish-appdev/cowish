@@ -80,7 +80,10 @@ export default function ProfileScreen() {
   const fetchItems = async () => {
     if (YourWishlist?.id) {
       await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
-        setWishlistItems(data);
+        setWishlistItems(data.sort((a,b)=>{
+          if(a.completed!=b.completed){ return a.completed?1:-1}
+          return a.name.localeCompare(b.name)
+        }));
         setLoadItems(false);
       });
     }
@@ -93,7 +96,10 @@ export default function ProfileScreen() {
       if (YourWishlist && YourWishlist.id) {
         // Refetch updated items
         await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
-          setWishlistItems(data);
+          setWishlistItems(data.sort((a,b)=>{
+            if(a.completed!=b.completed){ return a.completed?1:-1}
+            return a.name.localeCompare(b.name)
+          }));
         });
     };
   }
@@ -102,7 +108,28 @@ export default function ProfileScreen() {
     if (YourWishlist && YourWishlist.id) {
       // Refetch updated items
       await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
-        setWishlistItems(data);
+        setWishlistItems(data.sort((a,b)=>{
+          if(a.completed!=b.completed){ return a.completed?1:-1}
+          return a.name.localeCompare(b.name)
+        }));
+      });
+    };
+  }
+  const handleDelete = async (item_id:string)=>{
+    const response = await fetch(`http://127.0.0.1:5000/wishlists_items/${item_id}`,{
+      method:"DELETE",
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to delete item.");
+    }
+    if (YourWishlist && YourWishlist.id) {
+      // Refetch updated items
+      await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
+        setWishlistItems(data.sort((a,b)=>{
+          if(a.completed!=b.completed){ return a.completed?1:-1}
+          return a.name.localeCompare(b.name)
+        }));
       });
     };
   }
@@ -162,9 +189,7 @@ export default function ProfileScreen() {
               key={index}
               item={item}
               theme={theme}
-              onDelete={() =>
-                setWishlist((prev) => prev.filter((_, i) => i !== index))
-              }
+              onDelete={()=>handleDelete(item.item_id)}
               onToggle={() => handleToggleComplete(item)}
             />
           ))}

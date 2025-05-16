@@ -28,7 +28,7 @@ export default function FriendList({ filter ,friends}: { filter: string, friends
   const [friends_info,setFriendsInfo] = useState<friend_wishlist_info[]|[]>([])
   const theme = useColorScheme();
   const tagMap: {[key:string]:string} = {
-    "Friends" : 'friends',
+    "Friends" : 'friend',
     "Family" : 'family',
     "All" : "All",
     "Coworkers": "coworker",
