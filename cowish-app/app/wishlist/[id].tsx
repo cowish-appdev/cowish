@@ -9,28 +9,18 @@ import {
   useColorScheme,
   Image,
 } from "react-native";
+import { ThemedText } from "@/components/ThemedText";
 import { useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
-
+import getWishlistItems from "@/components/getWishlistItems";
+import { WishlistItems, Wishlist } from "@/interface";
+import getWishlist from "@/components/getWishlist";
+import getUserById from "@/components/getUserById";
+import { User } from "@/interface";
+import imageMap from "@/assets/imageMap";
 const screenWidth = Dimensions.get("window").width;
 
-const sampleWishlists = [
-  {
-    id: "w101",
-    user: {
-      name: "Fin",
-      email: "fin@example.com",
-      code: "F1N2023",
-      profile_pic: "https://i.pravatar.cc/150?img=32",
-    },
-    items: [
-      { id: "1", name: "Whiskey stones", des: "Yummy", checked: false },
-      { id: "2", name: "Tom Ford Oud Wood", checked: true },
-      { id: "3", name: "Codenames game", checked: false },
-    ],
-  },
-];
 
 const Checkbox = ({
   checked,
@@ -60,19 +50,55 @@ export default function WishlistPage() {
   const theme = useColorScheme();
   const isDark = theme === "dark";
   const { id } = useLocalSearchParams();
+  const wishlistId = Array.isArray(id) ? id[0] : id ?? '';
+  const [Wishlist, setWishlist] = useState<Wishlist|null>(null)
+  const [wishlistItems, setWishlistItems] = useState<WishlistItems[]|[]>([])
+  //const wishlist = sampleWishlists.find((w) => w.id === id);
+  const [ownerInfo, setOwnerInfo] = useState<User|null>(null)
+  //const [items, setItems] = useState(wishlist?.items ?? []);
+  const [loadingWishlist, setLoadingWishlist] = useState(true);
+  const [loadingItems, setLoadingItems] = useState(true);
+  const [loadingOwner, setLoadingOwner] = useState(true);
+  console.log(wishlistId)
+  useEffect(()=>{
+    getWishlist(wishlistId,(data:Wishlist) =>{
+      setWishlist(data);
+      setLoadingWishlist(false)
+    })
+    getWishlistItems(wishlistId,(data: WishlistItems[]|[])=>{
+      setWishlistItems(data);
+      setLoadingItems(false)
+    })
+  },[])
+  useEffect(()=>{
+    if(Wishlist&&Wishlist.owner_user_id){
+      getUserById(Wishlist?.owner_user_id ?? '', (userData: User)=>{
+        setOwnerInfo(userData);
+        setLoadingOwner(false)
+      })
+    }
+  },[Wishlist])
+  console.log("w:",Wishlist)
+  console.log("owner:", ownerInfo)
+  console.log("item:", wishlistItems)
+  const profilePic = ownerInfo && ownerInfo.profile_pic ? imageMap[ownerInfo.profile_pic]||require('@/assets/images/default.jpg'):require('@/assets/images/default.jpg');
 
-  const wishlist = sampleWishlists.find((w) => w.id === id);
-  const [items, setItems] = useState(wishlist?.items ?? []);
 
   const toggleCheckbox = (itemId: string) => {
-    setItems((prev) =>
+    setWishlistItems((prev) =>
       prev.map((item) =>
-        item.id === itemId ? { ...item, checked: !item.checked } : item
+        item.item_id === itemId ? { ...item, completed: !item.completed } : item
       )
     );
+
   };
 
-  if (!wishlist) {
+
+  
+  if(loadingItems||loadingOwner||loadingWishlist||!Wishlist||!ownerInfo){
+    return <ThemedText>Loading...</ThemedText>
+  }
+  if (!wishlistId || wishlistId === '') {
     return (
       <View style={styles.center}>
         <Text>Wishlist not found.</Text>
@@ -96,27 +122,27 @@ export default function WishlistPage() {
       >
         <View style={styles.avatarContainer}>
           <Image
-            source={{ uri: wishlist.user.profile_pic }}
+            source={profilePic}
             style={styles.profilePic}
           />
         </View>
-        <Text style={styles.profileName}>{wishlist.user.name}</Text>
+        <Text style={styles.profileName}>{ownerInfo?.username}</Text>
         <View style={styles.infoContainer}>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Email</Text>
-            <Text style={styles.infoValue}>{wishlist.user.email}</Text>
+            <Text style={styles.infoValue}>{ownerInfo?.email}</Text>
           </View>
           <View style={styles.infoDivider} />
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Code</Text>
-            <Text style={styles.infoValue}>{wishlist.user.code}</Text>
+            <Text style={styles.infoValue}>{ownerInfo?.code}</Text>
           </View>
         </View>
       </LinearGradient>
 
       <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
+        data={wishlistItems}
+        keyExtractor={(item) => item.item_id}
         renderItem={({ item }) => (
           <View
             style={[
@@ -126,8 +152,8 @@ export default function WishlistPage() {
           >
             <View style={styles.checkboxContainer}>
               <Checkbox
-                checked={item.checked}
-                onPress={() => toggleCheckbox(item.id)}
+                checked={item.completed}
+                onPress={() => toggleCheckbox(item.item_id)}
                 darkMode={isDark}
               />
             </View>
@@ -137,7 +163,7 @@ export default function WishlistPage() {
                   styles.wishItemName,
                   {
                     color: isDark ? "#eee" : "#000",
-                    textDecorationLine: item.checked ? "line-through" : "none",
+                    textDecorationLine: item.completed ? "line-through" : "none",
                   },
                 ]}
               >
@@ -150,11 +176,11 @@ export default function WishlistPage() {
                     fontSize: 13,
                     marginTop: 4,
                     color: isDark ? "#aaa" : "#555",
-                    textDecorationLine: item.checked ? "line-through" : "none",
+                    textDecorationLine: item.completed ? "line-through" : "none",
                   },
                 ]}
               >
-                {item.des}
+                {item.description}
               </Text>
             </View>
           </View>
@@ -264,3 +290,20 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 });
+
+/*const sampleWishlists = [
+  {
+    id: "w101",
+    user: {
+      name: "Fin",
+      email: "fin@example.com",
+      code: "F1N2023",
+      profile_pic: "https://i.pravatar.cc/150?img=32",
+    },
+    items: [
+      { id: "1", name: "Whiskey stones", des: "Yummy", checked: false },
+      { id: "2", name: "Tom Ford Oud Wood", checked: true },
+      { id: "3", name: "Codenames game", checked: false },
+    ],
+  },
+];*/

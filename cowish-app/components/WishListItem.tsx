@@ -7,8 +7,9 @@ import {
   Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { WishlistItems } from "@/interface";
 
-export default function WishlistItem({ item, onDelete, onToggle, theme }: any) {
+export default function WishlistItem({ item, onDelete, onToggle, theme }: {item:WishlistItems, onDelete:any,onToggle:any,theme:any}) {
   const textColor = theme === "dark" ? "#e1e1e1" : "#000000";
   const descColor = theme === "dark" ? "#aaa" : "#555";
   const bgColor = theme === "dark" ? "#2c2c2c" : "#f0f0f0";
@@ -38,7 +39,7 @@ export default function WishlistItem({ item, onDelete, onToggle, theme }: any) {
         >
           {item.name}
         </Text>
-        <Text style={[styles.desc, { color: descColor }]}>{item.desc}</Text>
+        <Text style={[styles.desc, { color: descColor }]}>{item.description}</Text>
       </View>
 
       {/* Delete */}

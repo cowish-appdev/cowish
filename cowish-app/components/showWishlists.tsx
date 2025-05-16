@@ -10,63 +10,38 @@ import {
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { router } from "expo-router";
+import { Friends, friend_wishlist_info } from "@/interface";
+import { useEffect, useState } from "react";
+import getFriendInfo from "./getFriendInfo";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import imageMap from "@/assets/imageMap";
 
-const mockUsers = [
-  {
-    user_id: "u1",
-    username: "Fin",
-    profile_pic: "https://i.pravatar.cc/150?img=32",
-    wishlist_id: "w101",
-    item_count: 5,
-    tag: "Friends",
-  },
-  {
-    user_id: "u2",
-    username: "Fah",
-    profile_pic: "https://i.pravatar.cc/150?img=12",
-    wishlist_id: "w102",
-    item_count: 4,
-    tag: "Family",
-  },
-  {
-    user_id: "u3",
-    username: "Boom",
-    profile_pic: "https://i.pravatar.cc/150?img=65",
-    wishlist_id: "w103",
-    item_count: 7,
-    tag: "Friends",
-  },
-  {
-    user_id: "u4",
-    username: "Ling",
-    profile_pic: "https://i.pravatar.cc/150?img=25",
-    wishlist_id: "w104",
-    item_count: 7,
-    tag: "Coworkers",
-  },
-  {
-    user_id: "u3",
-    username: "Boom",
-    profile_pic: "https://i.pravatar.cc/150?img=65",
-    wishlist_id: "w103",
-    item_count: 7,
-    tag: "Friends",
-  },
-];
 
 const numColumns = 2;
 const screenWidth = Dimensions.get("window").width;
 const containerPaddingHorizontal = 20;
 const cardMarginHorizontal = 6;
 const availableWidth = screenWidth - containerPaddingHorizontal * 2;
-const cardWidth = availableWidth / numColumns - cardMarginHorizontal * 2;
+const cardWidth = availableWidth / numColumns - cardMarginHorizontal * 2; 
 
-export default function FriendList({ filter }: { filter: string }) {
+export default function FriendList({ filter ,friends}: { filter: string, friends:Friends[]|[]}) {
+  const [friends_info,setFriendsInfo] = useState<friend_wishlist_info[]|[]>([])
   const theme = useColorScheme();
+  const tagMap: {[key:string]:string} = {
+    "Friends" : 'friends',
+    "Family" : 'family',
+    "All" : "All",
+    "Coworkers": "coworker",
+    "Significant Other": "significant-other"
+  }
   const filteredUsers =
-    filter === "All" ? mockUsers : mockUsers.filter((u) => u.tag === filter);
-
-  const renderCard = ({ item }: { item: (typeof mockUsers)[0] }) => (
+    filter === "All" ? friends_info : friends_info.filter((u) => u.tag === tagMap[filter]);
+  console.log("friends2:", friends)
+  useEffect(()=>{
+    getFriendInfo(friends,setFriendsInfo)
+  },[])
+  console.log(friends_info)
+  const renderCard = ({ item }: { item: friend_wishlist_info}) => (
     <View
       style={[
         styles.card,
@@ -75,7 +50,13 @@ export default function FriendList({ filter }: { filter: string }) {
         },
       ]}
     >
-      <Image source={{ uri: item.profile_pic }} style={styles.avatar} />
+      { item && (
+              <Image
+                source={item && item.profile_pic ? imageMap[item.profile_pic]||require('@/assets/images/default.jpg'):require('@/assets/images/default.jpg')} 
+                style={styles.avatar}
+              />
+            )
+      }
       <ThemedText
         style={[styles.username, { color: theme === "dark" ? "#fff" : "#111" }]}
       >
@@ -102,7 +83,7 @@ export default function FriendList({ filter }: { filter: string }) {
     <ThemedView style={styles.container}>
       <FlatList
         data={filteredUsers}
-        keyExtractor={(item) => item.user_id}
+        keyExtractor={(item) => item.friend_id}
         renderItem={renderCard}
         numColumns={numColumns}
         showsVerticalScrollIndicator={false}
@@ -157,3 +138,46 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+
+/*const mockUsers = [
+  {
+    user_id: "u1",
+    username: "Fin",
+    profile_pic: "https://i.pravatar.cc/150?img=32",
+    wishlist_id: "w101",
+    item_count: 5,
+    tag: "Friends",
+  },
+  {
+    user_id: "u2",
+    username: "Fah",
+    profile_pic: "https://i.pravatar.cc/150?img=12",
+    wishlist_id: "w102",
+    item_count: 4,
+    tag: "Family",
+  },
+  {
+    user_id: "u3",
+    username: "Boom",
+    profile_pic: "https://i.pravatar.cc/150?img=65",
+    wishlist_id: "w103",
+    item_count: 7,
+    tag: "Friends",
+  },
+  {
+    user_id: "u4",
+    username: "Ling",
+    profile_pic: "https://i.pravatar.cc/150?img=25",
+    wishlist_id: "w104",
+    item_count: 7,
+    tag: "Coworkers",
+  },
+  {
+    user_id: "u3",
+    username: "Boom",
+    profile_pic: "https://i.pravatar.cc/150?img=65",
+    wishlist_id: "w103",
+    item_count: 7,
+    tag: "Friends",
+  },
+];*/

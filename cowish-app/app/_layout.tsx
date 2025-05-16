@@ -14,7 +14,7 @@ import { View, ActivityIndicator } from "react-native";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { User, onAuthStateChanged} from "firebase/auth";
-import { auth } from "./firebase";
+import {auth, provider} from "./firebase";
 import { User as user} from "@/interface";
 import getUserById from "@/components/getUserById";
 
@@ -46,19 +46,30 @@ export default function RootLayout() {
 
   const [User, setUser] = useState<User|null |undefined>(undefined); // Replace with real auth state
   const [userAcc, setUserAcc] = useState<user|null>(null);
+  const [loading, setLoading] = useState(true);
   const[refreshPage,setRefreshPage] = useState(0);
 
   // Simulate checking auth status (replace with real listener)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: User|null)=>{
-      getUserById(firebaseUser?.uid ?? '',setUserAcc)
-      SplashScreen.hideAsync();
+      if(firebaseUser){
+        getUserById(firebaseUser.uid,setUserAcc)
+        SplashScreen.hideAsync();
+      }
+      else{
+        setUserAcc(null)
+      }
+      setLoading(false);
     })
     return unsubscribe;
   }, []);
 
-  if (!loaded) {
-    return null;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   return (

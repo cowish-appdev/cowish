@@ -13,14 +13,21 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import WishlistItem from "@/components/WishListItem";
 import { Background } from "@react-navigation/elements";
-import { User } from "@/interface";
+import { User, Wishlist, WishlistItems } from "@/interface";
 import getUserById from "@/components/getUserById";
 import imageMap from "@/assets/imageMap";
 import { useUser } from "../_layout";
+import { reauthenticateWithCredential } from "firebase/auth";
+import getWishlistByUser from "@/components/getWishlistByUser";
+import createWishlistUser from "@/components/createWishlistUser";
+import getWishlistItems from "@/components/getWishlistItems";
+import checkOffItem from "@/components/checkOffItem";
+import editSelfWishlist from "@/components/editSelfWishlist";
+
 
 export default function ProfileScreen() {
-  const { userAcc, setUserAcc } = useUser();
-  const [loading, setLoading] = useState(true);
+  const { userAcc, setUserAcc} = useUser()
+  const[loading,setUserLoading] = useState(true);
   const theme = useColorScheme();
   const background = theme === "dark" ? "#1e1e1e" : "#ffffff";
   const textColor = theme === "dark" ? "#e1e1e1" : "#000000";
@@ -34,25 +41,77 @@ export default function ProfileScreen() {
     { name: "Tom Ford Oud Wood", desc: "Luxury fragrance", completed: false },
     { name: "Codenames Game", desc: "Fun party game", completed: false },
   ]);
-  const handleToggleComplete = (index: number) => {
-    setWishlist((prev) =>
-      prev.map((item, i) =>
-        i === index ? { ...item, completed: !item.completed } : item
-      )
-    );
-  };
+  const [YourWishlist, setYourWishlist] = useState<Wishlist|null>(null)
+  const [loadWishlist, setLoadingWishlist] = useState(true);
+  const [WishlistItems, setWishlistItems] = useState<WishlistItems[]|[]>([])
+  const [loadItems, setLoadItems]= useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [newItemName, setNewItemName] = useState("");
   const [newItemDesc, setNewItemDesc] = useState("");
+  
+  
+  useEffect(()=>{
+    if(userAcc){
+      setUserLoading(false)
+    }
+  },[userAcc])
+  useEffect(()=>{
+    if(!userAcc) return;
+
+    const fetchWishlist = async () => {
+      try {
+        await getWishlistByUser(userAcc.uuid, (wishlistData:Wishlist) => {
+          if (wishlistData) {
+            setYourWishlist(wishlistData);
+          } else {
+            createWishlistUser(userAcc, (createdWishlist:Wishlist) => {
+              setYourWishlist(createdWishlist);
+            });
+          }
+        });
+      } finally {
+        setLoadingWishlist(false);
+      }
+    };
+    fetchWishlist();
+  }, [userAcc]);
 
   useEffect(() => {
-    if (userAcc) {
-      setLoading(false);
+  const fetchItems = async () => {
+    if (YourWishlist?.id) {
+      await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
+        setWishlistItems(data);
+        setLoadItems(false);
+      });
     }
-  }, [userAcc]);
+  };
+  fetchItems();
+}, [YourWishlist]);
+
+  const handleToggleComplete = async (item: WishlistItems) => {
+      await checkOffItem(item.item_id, item.completed)
+      if (YourWishlist && YourWishlist.id) {
+        // Refetch updated items
+        await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
+          setWishlistItems(data);
+        });
+    };
+  }
+  const editWishlist = async (wishlist_id:string,name:string,desc:string|null)=>{
+    await editSelfWishlist(wishlist_id,name,desc)
+    if (YourWishlist && YourWishlist.id) {
+      // Refetch updated items
+      await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
+        setWishlistItems(data);
+      });
+    };
+  }
+  console.log(userAcc)
+  console.log(YourWishlist)
+  console.log(WishlistItems)
   return (
-    <View>
-      {loading ? (
+    <View>{
+      loading || loadItems||loadWishlist ? (
         <Text>Loading...</Text>
       ) : (
         <ScrollView contentContainerStyle={styles.container}>
@@ -98,17 +157,17 @@ export default function ProfileScreen() {
                 Your Wishlist
               </Text>
 
-              {wishlist.map((item, index) => (
-                <WishlistItem
-                  key={index}
-                  item={item}
-                  theme={theme}
-                  onDelete={() =>
-                    setWishlist((prev) => prev.filter((_, i) => i !== index))
-                  }
-                  onToggle={() => handleToggleComplete(index)}
-                />
-              ))}
+          {WishlistItems.map((item, index) => (
+            <WishlistItem
+              key={index}
+              item={item}
+              theme={theme}
+              onDelete={() =>
+                setWishlist((prev) => prev.filter((_, i) => i !== index))
+              }
+              onToggle={() => handleToggleComplete(item)}
+            />
+          ))}
 
               <TouchableOpacity
                 style={styles.addButton}
@@ -142,27 +201,20 @@ export default function ProfileScreen() {
                   multiline
                 />
 
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity
-                    style={styles.saveButton}
-                    onPress={() => {
-                      if (newItemName.trim()) {
-                        setWishlist((prev) => [
-                          ...prev,
-                          {
-                            name: newItemName,
-                            desc: newItemDesc,
-                            completed: false,
-                          },
-                        ]);
-                        setNewItemName("");
-                        setNewItemDesc("");
-                        setModalVisible(false);
-                      }
-                    }}
-                  >
-                    <Text style={styles.saveText}>Save</Text>
-                  </TouchableOpacity>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={() => {
+                  if (newItemName.trim()) {
+                    editWishlist(YourWishlist?.id ?? '',newItemName,newItemDesc)
+                    setNewItemName("");
+                    setNewItemDesc("");
+                    setModalVisible(false);
+                  }
+                }}
+              >
+                <Text style={styles.saveText}>Save</Text>
+              </TouchableOpacity>
 
                   <TouchableOpacity onPress={() => setModalVisible(false)}>
                     <Text style={styles.cancelText}>Cancel</Text>
