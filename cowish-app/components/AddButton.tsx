@@ -20,7 +20,7 @@ export default function AddButton({ onPress }: AddButtonProps) {
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: "#0a7ea4",
+    backgroundColor: "#5046e3",
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 8,
