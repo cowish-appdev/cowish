@@ -82,7 +82,7 @@ export default function WishListSelection() {
   const colors = {
     background: isDarkMode ? "#121212" : "#F0F8FF",
     card: isDarkMode ? "#242424" : "#FFFFFF",
-    primary: "#3B82F6", // Blue
+    primary: "#5046e4", // Blue
     primaryDark: "#2563EB", // Darker blue
     iconBg: isDarkMode ? "#3B4252" : "#EBF4FF",
     text: isDarkMode ? "#FFFFFF" : "#1F2937",

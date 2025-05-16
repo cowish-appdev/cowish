@@ -10,7 +10,7 @@ import {
   Modal,
   TextInput,
 } from "react-native";
-import { router,useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import WishlistItem from "@/components/WishListItem";
 import { Background } from "@react-navigation/elements";
 import { User } from "@/interface";
@@ -18,14 +18,16 @@ import getUserById from "@/components/getUserById";
 import imageMap from "@/assets/imageMap";
 import { useUser } from "../_layout";
 
-
 export default function ProfileScreen() {
-  const { userAcc, setUserAcc} = useUser()
-  const[loading,setLoading] = useState(true);
+  const { userAcc, setUserAcc } = useUser();
+  const [loading, setLoading] = useState(true);
   const theme = useColorScheme();
   const background = theme === "dark" ? "#1e1e1e" : "#ffffff";
   const textColor = theme === "dark" ? "#e1e1e1" : "#000000";
-  const profilePic = userAcc && userAcc?.profile_pic ? imageMap[userAcc?.profile_pic]||require('@/assets/images/default.jpg'):require('@/assets/images/default.jpg');
+  const profilePic =
+    userAcc && userAcc?.profile_pic
+      ? imageMap[userAcc?.profile_pic] || require("@/assets/images/default.jpg")
+      : require("@/assets/images/default.jpg");
 
   const [wishlist, setWishlist] = useState([
     { name: "Whiskey Stones", desc: "Reusable ice cubes", completed: false },
@@ -42,134 +44,135 @@ export default function ProfileScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [newItemName, setNewItemName] = useState("");
   const [newItemDesc, setNewItemDesc] = useState("");
-  
-  
-  useEffect(()=>{
-    if(userAcc){
-      setLoading(false)
+
+  useEffect(() => {
+    if (userAcc) {
+      setLoading(false);
     }
-  },[userAcc])
+  }, [userAcc]);
   return (
-    <View>{
-      loading ? (
+    <View>
+      {loading ? (
         <Text>Loading...</Text>
-      ) : 
-      <ScrollView contentContainerStyle={styles.container}>
-      {/* Left Column */}
+      ) : (
+        <ScrollView contentContainerStyle={styles.container}>
+          {/* Left Column */}
 
-      <View style={styles.leftColumn}>
-        {/* Profile Card */}
-        <View style={[styles.card, { backgroundColor: background }]}>
-          <Text style={[styles.name, { color: textColor }]}>
-            {userAcc?.username ?? ''}
-          </Text>
-          <Image
-            source={profilePic}
-            style={styles.profileImage}
-            resizeMode="cover"
-          />
-          <Text style={[styles.email, { color: textColor }]}>
-            { userAcc?.email ?? ''}
-          </Text>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => router.push(`/EditProfile`)}
-          >
-            <Text style={styles.editText}>Edit Profile</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Share Code Card */}
-        <View style={[styles.card, { backgroundColor: background }]}>
-          <Text style={[styles.cardTitle, { color: textColor }]}>
-            Your Share Code
-          </Text>
-          <Text style={[styles.codeText, { color: textColor }]}>{userAcc?.code ?? '######'}</Text>
-        </View>
-      </View>
-
-      {/* Right Column */}
-      <View style={styles.rightColumn}>
-        <View style={[styles.card, { backgroundColor: background }]}>
-          <Text style={[styles.cardTitle, { color: textColor }]}>
-            Your Wishlist
-          </Text>
-
-          {wishlist.map((item, index) => (
-            <WishlistItem
-              key={index}
-              item={item}
-              theme={theme}
-              onDelete={() =>
-                setWishlist((prev) => prev.filter((_, i) => i !== index))
-              }
-              onToggle={() => handleToggleComplete(index)}
-            />
-          ))}
-
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.addText}>+ Add Item</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Item</Text>
-
-            <TextInput
-              placeholder="Item name"
-              style={styles.input}
-              value={newItemName}
-              onChangeText={setNewItemName}
-            />
-            <TextInput
-              placeholder="Description"
-              style={[styles.input, { height: 80 }]}
-              value={newItemDesc}
-              onChangeText={setNewItemDesc}
-              multiline
-            />
-
-            <View style={styles.modalButtons}>
+          <View style={styles.leftColumn}>
+            {/* Profile Card */}
+            <View style={[styles.card, { backgroundColor: background }]}>
+              <Text style={[styles.name, { color: textColor }]}>
+                {userAcc?.username ?? ""}
+              </Text>
+              <Image
+                source={profilePic}
+                style={styles.profileImage}
+                resizeMode="cover"
+              />
+              <Text style={[styles.email, { color: textColor }]}>
+                {userAcc?.email ?? ""}
+              </Text>
               <TouchableOpacity
-                style={styles.saveButton}
-                onPress={() => {
-                  if (newItemName.trim()) {
-                    setWishlist((prev) => [
-                      ...prev,
-                      {
-                        name: newItemName,
-                        desc: newItemDesc,
-                        completed: false,
-                      },
-                    ]);
-                    setNewItemName("");
-                    setNewItemDesc("");
-                    setModalVisible(false);
-                  }
-                }}
+                style={styles.editButton}
+                onPress={() => router.push(`/EditProfile`)}
               >
-                <Text style={styles.saveText}>Save</Text>
+                <Text style={styles.editText}>Edit Profile</Text>
               </TouchableOpacity>
+            </View>
 
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Text style={styles.cancelText}>Cancel</Text>
+            {/* Share Code Card */}
+            <View style={[styles.card, { backgroundColor: background }]}>
+              <Text style={[styles.cardTitle, { color: textColor }]}>
+                Your Share Code
+              </Text>
+              <Text style={[styles.codeText, { color: textColor }]}>
+                {userAcc?.code ?? "######"}
+              </Text>
+            </View>
+          </View>
+
+          {/* Right Column */}
+          <View style={styles.rightColumn}>
+            <View style={[styles.card, { backgroundColor: background }]}>
+              <Text style={[styles.cardTitle, { color: textColor }]}>
+                Your Wishlist
+              </Text>
+
+              {wishlist.map((item, index) => (
+                <WishlistItem
+                  key={index}
+                  item={item}
+                  theme={theme}
+                  onDelete={() =>
+                    setWishlist((prev) => prev.filter((_, i) => i !== index))
+                  }
+                  onToggle={() => handleToggleComplete(index)}
+                />
+              ))}
+
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => setModalVisible(true)}
+              >
+                <Text style={styles.addText}>+ Add Item</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </Modal>
-    </ScrollView>
-    }
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Add New Item</Text>
+
+                <TextInput
+                  placeholder="Item name"
+                  style={styles.input}
+                  value={newItemName}
+                  onChangeText={setNewItemName}
+                />
+                <TextInput
+                  placeholder="Description"
+                  style={[styles.input, { height: 80 }]}
+                  value={newItemDesc}
+                  onChangeText={setNewItemDesc}
+                  multiline
+                />
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.saveButton}
+                    onPress={() => {
+                      if (newItemName.trim()) {
+                        setWishlist((prev) => [
+                          ...prev,
+                          {
+                            name: newItemName,
+                            desc: newItemDesc,
+                            completed: false,
+                          },
+                        ]);
+                        setNewItemName("");
+                        setNewItemDesc("");
+                        setModalVisible(false);
+                      }
+                    }}
+                  >
+                    <Text style={styles.saveText}>Save</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={() => setModalVisible(false)}>
+                    <Text style={styles.cancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -200,7 +203,7 @@ const styles = StyleSheet.create({
   },
   profileImage: {
     width: "85%",
-    height:"50%",
+    height: "50%",
     aspectRatio: 1,
     borderRadius: 16,
     marginBottom: 16,
