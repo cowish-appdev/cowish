@@ -419,12 +419,12 @@ def get_group_details(group_id):
 
         # Fetch all items for this wishlist
         cursor.execute("""
-            SELECT item_id, name, completed
+            SELECT item_id, name, description, completed
             FROM wishlists_items
             WHERE wishlist_id = %s
         """, (wishlist_id,))
         items = [
-            {"id": i[0], "name": i[1], "completed": i[2]}
+            {"id": i[0], "name": i[1], "description": i[2],"completed":i[3]}
             for i in cursor.fetchall()
         ]
 

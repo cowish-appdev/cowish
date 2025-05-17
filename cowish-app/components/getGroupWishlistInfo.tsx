@@ -32,6 +32,7 @@ export default function getGroupWishlistInfo(group_id: string,setGroupWishlistIn
                 }))
                 })),
             };
+            console.log(sortedData)
             setGroupWishlistInfo(sortedData);
         }catch(error){
             console.error('Fetch user failed: ',error);

@@ -361,7 +361,7 @@ export default function GroupPage() {
                     ]}
                   />
 
-                  {wishlist && wishlist.items.length > 0 ? (
+                  {wishlist && wishlist.items.length >= 0 ? (
                     wishlist.items.map((item) => (
                       <TouchableOpacity
                         style={styles.itemContainer}
