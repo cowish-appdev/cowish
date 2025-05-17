@@ -102,8 +102,6 @@ export default function WishlistPage() {
       )
     );*/
 
-
-
   
   if(loadingItems||loadingOwner||loadingWishlist||!Wishlist||!ownerInfo){
     return <ThemedText>Loading...</ThemedText>
@@ -211,7 +209,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     alignItems: "center",
-    height: "45%",
+    //height: "45%",
   },
   avatarContainer: { alignItems: "center", marginBottom: 10 },
   profilePic: {
