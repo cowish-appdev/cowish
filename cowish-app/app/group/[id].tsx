@@ -42,6 +42,8 @@ export default function GroupPage() {
     null
   );
   const [newItemName, setNewItemName] = useState("");
+  const [newItemDescription, setNewItemDescription] = useState("");
+
   const [newWishlistName, setNewWishlistName] = useState("");
   const [newWishlistDescription, setNewWishlistDescription] = useState("");
   //const [wishlists, setWishlists] = useState(group?.wishlists || []);
