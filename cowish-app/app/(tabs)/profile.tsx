@@ -133,7 +133,7 @@ export default function ProfileScreen() {
   console.log(YourWishlist)
   console.log(WishlistItems)
   return (
-    <View>{
+    <View style = {{flex:1}}>{
       loading || loadItems||loadWishlist ? (
         <Text>Loading...</Text>
       ) : (
@@ -252,6 +252,8 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    flex:1,
+    flexGrow:1,
     flexDirection: "row",
     padding: 20,
     margin: 16,
