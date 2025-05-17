@@ -148,7 +148,7 @@ export default function AddPage() {
     const firstChar = code.charAt(0);
     const length = code.length;
 
-    if (firstChar === "G" && length === 7) {
+    if (firstChar.toLowerCase() === "g" && length === 7) {
       return "group";
     } else if (length === 6) {
       return "individual";
