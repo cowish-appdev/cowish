@@ -1194,6 +1194,39 @@ def get_relationships_by_user_id1(user_id1):
         return jsonify(relationships), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+# delete relationship by user_id1
+@app.route('/relationships/<user_id1>/<user_id2>', methods=['DELETE'])
+def delete_relationships_by_user_id1(user_id1,user_id2):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT user_id2 AS friend_id, tag, created_at
+            FROM relationship
+            WHERE user_id1 = %s AND user_id2 = %s
+        """, (user_id1,user_id2))
+        rows = cur.fetchall()
+        if not rows:
+            cur.close()
+            conn.close()
+            return jsonify({"message":"relationship not found"}),200
+        cur.execute("""DELETE FROM relationship WHERE user_id1 = %s AND user_id2 = %s""",(user_id1,user_id2))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        relationships = []
+        for row in rows:
+            relationships.append({
+                "friend_id": row[0],
+                "tag": row[1],
+                "created_at": row[2]
+            })
+
+        return jsonify(relationships), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Run the app
 if __name__ == '__main__':

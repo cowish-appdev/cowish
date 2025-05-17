@@ -40,7 +40,8 @@ export default function FriendList({ filter ,friends}: { filter: string, friends
   useEffect(()=>{
     getFriendInfo(friends,setFriendsInfo)
   },[])
-  console.log(friends_info)
+  console.log("f",friends)
+  console.log("i",friends_info)
   const renderCard = ({ item }: { item: friend_wishlist_info}) => (
     <View
       style={[

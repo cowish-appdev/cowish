@@ -145,7 +145,7 @@ export default function GroupPage() {
   const addNewItem = async () => {
     if (newItemName.trim() === "" || !currentWishlistId) return;
     //const currentWishlist = groupWishlists?.wishlists.find((w) => w.id === currentWishlistId);
-    await editWishlist(currentWishlistId, newItemName, "-");
+    await editWishlist(currentWishlistId, newItemName, newItemDescription);
     await getGroupWishlistInfo(groupId, setGroupWishlists);
     setAddItemModalVisible(false);
     setNewItemName("");

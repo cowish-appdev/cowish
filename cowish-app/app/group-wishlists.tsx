@@ -39,9 +39,8 @@ export default function GroupListPage() {
   const [yourGroups, setYourGroups] = useState<GroupWithCount[]|[]>([]);
   const [groupIds, setGroupIds] = useState<string[]|[]>([])
   const [creatingGroup,setCreatingGroup] = useState(false)
-  let count =0
+  const [loading,setLoading] = useState(false)
   const fetchGroups = async(): Promise<GroupWithCount[]|[]>=>{
-    count+=1
     const ids = await getUserGroup(userAcc?.uuid??'',setGroupIds)
     if(ids && ids.length>0){
       const groups = await getGroupByIds(ids,setYourGroups)
@@ -50,9 +49,16 @@ export default function GroupListPage() {
     return []
   }
   useEffect(()=> {
-    fetchGroups()
+    const loadGroups = async()=>{
+      setLoading(true);
+      try{
+        await fetchGroups();
+      }finally{
+        setLoading(false);
+      }
+    }
+    loadGroups()
   },[userAcc])
-  console.log(count)
   console.log("id",groupIds)
   console.log("group",yourGroups)
 
@@ -93,7 +99,7 @@ export default function GroupListPage() {
       />
     </TouchableOpacity>
   );
-  if(!yourGroups.length){
+  if(loading){
     return <ThemedText>Loading...</ThemedText>
   }
 

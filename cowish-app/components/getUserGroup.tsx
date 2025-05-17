@@ -5,7 +5,7 @@ export default function getUserGroup(user_id:string,setGroups:Function){
             console.log(response.ok)
 
             if(!response.ok){
-                throw new Error('Network responser was not ok');
+                return [];
             }
             const data = await response.json();
             console.log(data)

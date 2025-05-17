@@ -11,11 +11,27 @@ export default function IndividualListPage() {
   const [filter, setFilter] = useState("All");
   const {userAcc, setUserAcc} = useUser();
   const [friends, setFriends] = useState<Friends[]|[]>([])
+  const [loading, setLoading] = useState(false)
   useEffect(()=>{
-    getFriends(userAcc?.uuid??'',setFriends)
-  },[])
+    const fetch = async()=>{
+      try{
+        setLoading(true)
+        await getFriends(userAcc?.uuid??'',setFriends)
+        setTimeout(()=>{
+          setLoading(false)
+        },500)
+      }catch(e){
+        console.error('Error: ',e)
+        setLoading(false)
+      }
+    }
+    if (userAcc?.uuid){
+      fetch()
+    }
+  },[userAcc])
+  console.log("load",loading)
   console.log("friends: ", friends)
-  if(!friends.length){
+  if(loading){
     return <ThemedText>Loading...</ThemedText>
   }
   return (

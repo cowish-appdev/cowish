@@ -5,7 +5,7 @@ export default function getFriends(user_uuid:string,setFriends:Function){
             const response = await fetch(`http://127.0.0.1:5000/relationships/user/${user_uuid}`)
             console.log(response.ok)
             if(!response.ok){
-                throw new Error('Network responser was not ok');
+                return [];
             }
             const data = await response.json();
             console.log(data)
