@@ -1,5 +1,5 @@
 // app/confirm.tsx
-import React from 'react'
+import React from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -7,35 +7,40 @@ import { StyleSheet, Animated, Image, Easing } from "react-native";
 import TagButton from "@/components/TagButton";
 import { useState, useRef, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import getUserByCode from '@/components/getUserByCode';
+import getUserByCode from "@/components/getUserByCode";
 import { User } from "@/interface";
 import imageMap from "@/assets/imageMap";
-import { useUser } from './_layout';
-import addRelationship from '@/components/addRelationship';
+import { useUser } from "./_layout";
+import addRelationship from "@/components/addRelationship";
 
 export default function ConfirmPage() {
-  const { userAcc, setUserAcc} = useUser()
-  const[loading,setLoading] = useState(true);
+  const { userAcc, setUserAcc } = useUser();
+  const [loading, setLoading] = useState(true);
   const { code } = useLocalSearchParams();
-  const userCode = Array.isArray(code) ? code[0] : code ?? '';
-  const [user, setUser] = useState<User|null>(null);
+  const userCode = Array.isArray(code) ? code[0] : code ?? "";
+  const [user, setUser] = useState<User | null>(null);
   const [selectedTag, setSelectedTag] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const profilePic = user && user.profile_pic ? imageMap[user.profile_pic]||require('@/assets/images/default.jpg'):require('@/assets/images/default.jpg');
-
+  const profilePic =
+    user && user.profile_pic
+      ? imageMap[user.profile_pic] || require("@/assets/images/default.jpg")
+      : require("@/assets/images/default.jpg");
 
   const tags = [
-    { label: "Friend", color: "#0a7ea4",value:"friend"},
-    { label: "Family", color: "#2ecc71",value:"family" },
-    { label: "Co-worker", color: "#e67300",value:"coworker" },
-    { label: "Significant Other", color: "#d6336c",value:"significant-other" },
+    { label: "Friend", color: "#0a7ea4", value: "friend" },
+    { label: "Family", color: "#2ecc71", value: "family" },
+    { label: "Co-worker", color: "#e67300", value: "coworker" },
+    {
+      label: "Significant Other",
+      color: "#d6336c",
+      value: "significant-other",
+    },
   ];
-  
 
   const handleHoldConfirm = (label: string) => {
     setSelectedTag(label);
-    addRelationship(userAcc?.uuid??'',user?.uuid??'',label)
+    addRelationship(userAcc?.uuid ?? "", user?.uuid ?? "", label);
     setShowPopup(true);
 
     Animated.timing(fadeAnim, {
@@ -55,27 +60,20 @@ export default function ConfirmPage() {
         router.push("/(tabs)/shared");
       });
     }, 2000);
-    
   };
-  useEffect(()=>{
-      if(userAcc){
-        setLoading(false)
-      }
-    },[userAcc])
-  useEffect(()=>{
-    getUserByCode(userCode, setUser)
-  },[])
+  useEffect(() => {
+    if (userAcc) {
+      setLoading(false);
+    }
+  }, [userAcc]);
+  useEffect(() => {
+    getUserByCode(userCode, setUser);
+  }, []);
   return (
     <ThemedView style={styles.container}>
-
       <ThemedText>{userAcc?.username}</ThemedText>
-      <ThemedText type="title">{user ? user.username: ''}</ThemedText>
-      { user && (
-        <Image
-          source={profilePic} 
-          style={styles.profileImage}
-        />
-      )}
+      <ThemedText type="title">{user ? user.username : ""}</ThemedText>
+      {user && <Image source={profilePic} style={styles.profileImage} />}
       <ThemedText style={{ marginTop: 20, marginBottom: 10 }}>
         Choose Tag (Hold to Confirm)
       </ThemedText>
@@ -136,9 +134,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   profileImage: {
-    width: 100,  // Set width
+    width: 100, // Set width
     height: 100, // Set height
-    borderRadius: 50,  // To make it circular
-    marginTop: 10,  // Add some space below the text
+    borderRadius: 50, // To make it circular
+    marginTop: 10, // Add some space below the text
   },
 });
