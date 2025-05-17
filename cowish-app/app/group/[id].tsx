@@ -10,7 +10,7 @@ import {
   ScrollView,
   TextInput,
   Modal,
-  ColorValue
+  ColorValue,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useMemo, useRef, useState, useEffect } from "react";
@@ -31,62 +31,64 @@ const { width } = Dimensions.get("window");
 
 export default function GroupPage() {
   const { id } = useLocalSearchParams();
-  const groupId = Array.isArray(id) ? id[0] : id ?? '';
+  const groupId = Array.isArray(id) ? id[0] : id ?? "";
   //const group = sampleGroups.find((g) => g.id === id) || sampleGroups[0]; // Default to first group if not found
   const theme = useColorScheme();
   const scrollY = useRef(new Animated.Value(0)).current;
-  const [expandedWishlist, setExpandedWishlist] = useState<string|null>(null);
+  const [expandedWishlist, setExpandedWishlist] = useState<string | null>(null);
   const [addItemModalVisible, setAddItemModalVisible] = useState(false);
   const [addWishlistModalVisible, setAddWishlistModalVisible] = useState(false);
-  const [currentWishlistId, setCurrentWishlistId] = useState<string|null>(null);
+  const [currentWishlistId, setCurrentWishlistId] = useState<string | null>(
+    null
+  );
   const [newItemName, setNewItemName] = useState("");
   const [newWishlistName, setNewWishlistName] = useState("");
   const [newWishlistDescription, setNewWishlistDescription] = useState("");
   //const [wishlists, setWishlists] = useState(group?.wishlists || []);
-  const [groupWishlists, setGroupWishlists] = useState<GroupWishlistInfo|null>(null)
+  const [groupWishlists, setGroupWishlists] =
+    useState<GroupWishlistInfo | null>(null);
   const profilePic =
     groupWishlists?.profile_pic && groupWishlists?.profile_pic
-      ? imageMap[groupWishlists?.profile_pic] || require("@/assets/images/default.jpg")
+      ? imageMap[groupWishlists?.profile_pic] ||
+        require("@/assets/images/default.jpg")
       : require("@/assets/images/default.jpg");
 
-  useEffect(()=>{
-    getGroupWishlistInfo(groupId,setGroupWishlists)
-  },[])
+  useEffect(() => {
+    getGroupWishlistInfo(groupId, setGroupWishlists);
+  }, []);
 
   const isDark = theme === "dark";
-  const colors = useMemo(
-    () => {
-      const headerGradient:[ColorValue, ColorValue, ColorValue] =  isDark
-        ? ["rgba(0,0,0,0.9)", "rgba(0,0,0,0.6)", "rgba(0,0,0,0)"]
-        : [
-            "rgba(247,247,247,0.9)",
-            "rgba(247,247,247,0.6)",
-            "rgba(247,247,247,0)",
-          ]
-      const buttonGradient:[ColorValue, ColorValue, ColorValue] = isDark
+  const colors = useMemo(() => {
+    const headerGradient: [ColorValue, ColorValue, ColorValue] = isDark
+      ? ["rgba(0,0,0,0.9)", "rgba(0,0,0,0.6)", "rgba(0,0,0,0)"]
+      : [
+          "rgba(247,247,247,0.9)",
+          "rgba(247,247,247,0.6)",
+          "rgba(247,247,247,0)",
+        ];
+    const buttonGradient: [ColorValue, ColorValue, ColorValue] = isDark
       ? ["#7047eb", "#4F46E5", "#3832a8"]
-      : ["#6366F1", "#4F46E5", "#4338CA"]
+      : ["#6366F1", "#4F46E5", "#4338CA"];
 
-      return {
-        headerGradient,
-        buttonGradient,
-        background: isDark ? "#000" : "#f7f7f7",
-        textPrimary: isDark ? "#fff" : "#111",
-        textSecondary: isDark ? "#a0a0a0" : "#6e6e6e",
-        card: isDark ? "rgba(30, 30, 33, 0.8)" : "rgba(255, 255, 255, 0.85)",
-        cardBorder: isDark ? "#2c2c2e" : "#e1e1e1",      
-        checkboxEmpty: isDark ? "#3a3a3c" : "#d1d1d6",
-        checkboxFilled: isDark ? "#4F46E5" : "#4F46E5",
-        cardShadow: isDark ? "rgba(0, 0, 0, 0.3)" : "rgba(0, 0, 0, 0.1)",
-        addItemButton: isDark ? "#2c2c2e" : "#f2f2f2",
-        modalBackground: isDark ? "#1c1c1e" : "#ffffff",
-        input: isDark ? "#2c2c2e" : "#f2f2f2",
-        inputText: isDark ? "#ffffff" : "#000000",
-        divider: isDark ? "#2c2c2e" : "#e1e1e1",
-        completed: isDark ? "#505050" : "#a0a0a0",
-      }
-
-    },[isDark]);
+    return {
+      headerGradient,
+      buttonGradient,
+      background: isDark ? "#000" : "#f7f7f7",
+      textPrimary: isDark ? "#fff" : "#111",
+      textSecondary: isDark ? "#a0a0a0" : "#6e6e6e",
+      card: isDark ? "rgba(30, 30, 33, 0.8)" : "rgba(255, 255, 255, 0.85)",
+      cardBorder: isDark ? "#2c2c2e" : "#e1e1e1",
+      checkboxEmpty: isDark ? "#3a3a3c" : "#d1d1d6",
+      checkboxFilled: isDark ? "#4F46E5" : "#4F46E5",
+      cardShadow: isDark ? "rgba(0, 0, 0, 0.3)" : "rgba(0, 0, 0, 0.1)",
+      addItemButton: isDark ? "#2c2c2e" : "#f2f2f2",
+      modalBackground: isDark ? "#1c1c1e" : "#ffffff",
+      input: isDark ? "#2c2c2e" : "#f2f2f2",
+      inputText: isDark ? "#ffffff" : "#000000",
+      divider: isDark ? "#2c2c2e" : "#e1e1e1",
+      completed: isDark ? "#505050" : "#a0a0a0",
+    };
+  }, [isDark]);
 
   // Header animations
   const headerHeight = scrollY.interpolate({
@@ -114,42 +116,49 @@ export default function GroupPage() {
   });
 
   // Toggle wishlist expansion
-  const toggleWishlist = (wishlistId:string) => {
+  const toggleWishlist = (wishlistId: string) => {
     setExpandedWishlist(expandedWishlist === wishlistId ? null : wishlistId);
   };
 
   // Toggle item completion
-  const toggleItemCompletion = async(wishlistId:string, itemId:string) => {
-    const currentWishlist = groupWishlists?.wishlists.find((w) => w.id === wishlistId);
+  const toggleItemCompletion = async (wishlistId: string, itemId: string) => {
+    const currentWishlist = groupWishlists?.wishlists.find(
+      (w) => w.id === wishlistId
+    );
     const item = currentWishlist?.items.find((i) => i.id === itemId);
     if (!item) return;
 
     await checkOffItem(itemId, item.completed);
-    await getGroupWishlistInfo(groupId,setGroupWishlists)
+    await getGroupWishlistInfo(groupId, setGroupWishlists);
   };
 
   // Open add item modal
-  const openAddItemModal = (wishlistId:string) => {
+  const openAddItemModal = (wishlistId: string) => {
     setCurrentWishlistId(wishlistId);
     setNewItemName("");
     setAddItemModalVisible(true);
   };
 
   // Add new item
-  const addNewItem = async() => {
+  const addNewItem = async () => {
     if (newItemName.trim() === "" || !currentWishlistId) return;
     //const currentWishlist = groupWishlists?.wishlists.find((w) => w.id === currentWishlistId);
-    await editWishlist(currentWishlistId,newItemName,'-')
-    await getGroupWishlistInfo(groupId,setGroupWishlists)
+    await editWishlist(currentWishlistId, newItemName, "-");
+    await getGroupWishlistInfo(groupId, setGroupWishlists);
     setAddItemModalVisible(false);
     setNewItemName("");
+    setNewItemDescription("");
   };
 
   // Add new wishlist
-  const addNewWishlist = async() => {
+  const addNewWishlist = async () => {
     if (newWishlistName.trim() === "") return;
-    const newWishlist = await createWishlistGroup(groupId,newWishlistName,newWishlistDescription)
-    await getGroupWishlistInfo(groupId,setGroupWishlists)
+    const newWishlist = await createWishlistGroup(
+      groupId,
+      newWishlistName,
+      newWishlistDescription
+    );
+    await getGroupWishlistInfo(groupId, setGroupWishlists);
     //setWishlists((currentWishlists) => [...currentWishlists, newWishlist]);
     setAddWishlistModalVisible(false);
     setNewWishlistName("");
@@ -209,7 +218,7 @@ export default function GroupPage() {
           <ThemedText
             style={[styles.headerTitleText, { color: colors.textPrimary }]}
           >
-            {groupWishlists?.name ?? ''}
+            {groupWishlists?.name ?? ""}
           </ThemedText>
         </Animated.View>
 
@@ -222,12 +231,9 @@ export default function GroupPage() {
             },
           ]}
         >
-          <Image
-            source={profilePic}
-            style={styles.groupImage}
-          />
+          <Image source={profilePic} style={styles.groupImage} />
           <ThemedText style={[styles.groupName, { color: colors.textPrimary }]}>
-            {groupWishlists?.name ?? ''}
+            {groupWishlists?.name ?? ""}
           </ThemedText>
           <ThemedText
             style={[styles.groupMeta, { color: colors.textSecondary }]}
@@ -356,7 +362,6 @@ export default function GroupPage() {
                   {wishlist && wishlist.items.length > 0 ? (
                     wishlist.items.map((item) => (
                       <TouchableOpacity
-                        key={item.id}
                         style={styles.itemContainer}
                         onPress={() =>
                           toggleItemCompletion(wishlist.id, item.id)
@@ -384,21 +389,39 @@ export default function GroupPage() {
                           )}
                         </TouchableOpacity>
 
-                        <ThemedText
-                          style={[
-                            styles.itemText,
-                            {
-                              color: item.completed
-                                ? colors.completed
-                                : colors.textPrimary,
-                              textDecorationLine: item.completed
-                                ? "line-through"
-                                : "none",
-                            },
-                          ]}
-                        >
-                          {item.name}
-                        </ThemedText>
+                        <View style={{ flex: 1 }}>
+                          <ThemedText
+                            style={[
+                              styles.itemText,
+                              {
+                                color: item.completed
+                                  ? colors.completed
+                                  : colors.textPrimary,
+                                textDecorationLine: item.completed
+                                  ? "line-through"
+                                  : "none",
+                              },
+                            ]}
+                          >
+                            {item.name}
+                          </ThemedText>
+
+                          {item.description ? (
+                            <ThemedText
+                              style={[
+                                styles.itemDescription,
+                                {
+                                  color: colors.textSecondary,
+                                  textDecorationLine: item.completed
+                                    ? "line-through"
+                                    : "none",
+                                },
+                              ]}
+                            >
+                              {item.description}
+                            </ThemedText>
+                          ) : null}
+                        </View>
                       </TouchableOpacity>
                     ))
                   ) : (
@@ -486,6 +509,24 @@ export default function GroupPage() {
               value={newItemName}
               onChangeText={setNewItemName}
               autoFocus
+            />
+
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.input,
+                  color: colors.inputText,
+                  height: 80,
+                  textAlignVertical: "top",
+                  paddingTop: 12,
+                },
+              ]}
+              placeholder="Description (optional)"
+              placeholderTextColor={colors.textSecondary}
+              value={newItemDescription}
+              onChangeText={setNewItemDescription}
+              multiline={true}
             />
 
             <View style={styles.modalButtons}>
@@ -924,6 +965,11 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: "600",
+  },
+  itemDescription: {
+    fontSize: 12,
+    color: "#888",
+    marginTop: 2,
   },
 });
 
