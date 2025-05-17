@@ -71,7 +71,6 @@ export default function ConfirmPage() {
   }, []);
   return (
     <ThemedView style={styles.container}>
-      <ThemedText>{userAcc?.username}</ThemedText>
       <ThemedText type="title">{user ? user.username : ""}</ThemedText>
       {user && <Image source={profilePic} style={styles.profileImage} />}
       <ThemedText style={{ marginTop: 20, marginBottom: 10 }}>
