@@ -13,6 +13,25 @@ export interface Groups{
     created_at: Date;
     profile_pic: string;
 }
+export interface GroupWithCount extends Groups{
+    member_count:number;
+}
+
+export interface GroupWishlistInfo extends Groups{
+    memberCount:number
+    wishlists: wishlist[]
+}
+export interface wishlist{
+    id: string;
+    title: string;
+    description: string;
+    items: wishlistitems[]
+}
+export interface wishlistitems{
+    id:string;
+    name: string;
+    completed: boolean;
+}
 export interface Friends{
     friend_id: string;
     tag: string;

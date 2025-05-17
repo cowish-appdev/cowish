@@ -22,7 +22,7 @@ import getWishlistByUser from "@/components/getWishlistByUser";
 import createWishlistUser from "@/components/createWishlistUser";
 import getWishlistItems from "@/components/getWishlistItems";
 import checkOffItem from "@/components/checkOffItem";
-import editSelfWishlist from "@/components/editSelfWishlist";
+import editWishlist from "@/components/editWishlist";
 
 
 export default function ProfileScreen() {
@@ -80,9 +80,8 @@ export default function ProfileScreen() {
   const fetchItems = async () => {
     if (YourWishlist?.id) {
       await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
-        setWishlistItems(data.sort((a,b)=>{
-          if(a.completed!=b.completed){ return a.completed?1:-1}
-          return a.name.localeCompare(b.name)
+        setWishlistItems(data.sort((a, b) => {
+          return Number(b.item_id) - Number(a.item_id);
         }));
         setLoadItems(false);
       });
@@ -96,21 +95,19 @@ export default function ProfileScreen() {
       if (YourWishlist && YourWishlist.id) {
         // Refetch updated items
         await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
-          setWishlistItems(data.sort((a,b)=>{
-            if(a.completed!=b.completed){ return a.completed?1:-1}
-            return a.name.localeCompare(b.name)
+          setWishlistItems(data.sort((a, b) => {
+            return Number(b.item_id) - Number(a.item_id);
           }));
         });
     };
   }
-  const editWishlist = async (wishlist_id:string,name:string,desc:string|null)=>{
-    await editSelfWishlist(wishlist_id,name,desc)
+  const editYourWishlist = async (wishlist_id:string,name:string,desc:string|null)=>{
+    await editWishlist(wishlist_id,name,desc)
     if (YourWishlist && YourWishlist.id) {
       // Refetch updated items
       await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
         setWishlistItems(data.sort((a,b)=>{
-          if(a.completed!=b.completed){ return a.completed?1:-1}
-          return a.name.localeCompare(b.name)
+          return Number(b.item_id) - Number(a.item_id)
         }));
       });
     };
@@ -127,8 +124,7 @@ export default function ProfileScreen() {
       // Refetch updated items
       await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
         setWishlistItems(data.sort((a,b)=>{
-          if(a.completed!=b.completed){ return a.completed?1:-1}
-          return a.name.localeCompare(b.name)
+          return Number(b.item_id) - Number(a.item_id)
         }));
       });
     };
@@ -231,7 +227,7 @@ export default function ProfileScreen() {
                 style={styles.saveButton}
                 onPress={() => {
                   if (newItemName.trim()) {
-                    editWishlist(YourWishlist?.id ?? '',newItemName,newItemDesc)
+                    editYourWishlist(YourWishlist?.id ?? '',newItemName,newItemDesc)
                     setNewItemName("");
                     setNewItemDesc("");
                     setModalVisible(false);

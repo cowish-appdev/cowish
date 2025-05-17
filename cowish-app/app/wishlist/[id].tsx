@@ -90,9 +90,8 @@ export default function WishlistPage() {
         if (Wishlist && Wishlist.id) {
           // Refetch updated items
           await getWishlistItems(Wishlist.id, (data: WishlistItems[]) => {
-            setWishlistItems(data.sort((a,b)=>{
-              if(a.completed!=b.completed){ return a.completed?1:-1}
-              return a.name.localeCompare(b.name)
+            setWishlistItems(data.sort((a, b) => {
+              return a.item_id.localeCompare(b.item_id);
             }));
           });
       };

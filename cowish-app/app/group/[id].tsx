@@ -10,6 +10,7 @@ import {
   ScrollView,
   TextInput,
   Modal,
+  ColorValue
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useMemo, useRef, useState, useEffect } from "react";
@@ -18,121 +19,74 @@ import { ThemedText } from "@/components/ThemedText";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
+import getGroupWishlistInfo from "@/components/getGroupWishlistInfo";
+import { GroupWishlistInfo, wishlist } from "@/interface";
+import imageMap from "@/assets/imageMap";
+import checkOffItem from "@/components/checkOffItem";
+import editWishlist from "@/components/editWishlist";
+import createGroup from "@/components/createGroup";
+import createWishlistGroup from "@/components/createWishlistGroup";
 
 const { width } = Dimensions.get("window");
 
-const sampleGroups = [
-  {
-    id: "g123456",
-    name: "Camping Crew",
-    profile_pic: "https://i.pravatar.cc/100?img=8",
-    memberCount: 8,
-    description: "Planning our annual trip to Yosemite National Park",
-    wishlists: [
-      {
-        id: "w001",
-        title: "Tent Equipment",
-        description: "All camping essentials for shelter",
-        items: [
-          { id: "i001", name: "4-Person Tent", completed: false },
-          { id: "i002", name: "Sleeping Bags", completed: true },
-          { id: "i003", name: "Inflatable Mattress", completed: false },
-        ],
-      },
-      {
-        id: "w002",
-        title: "Cooking Tools",
-        description: "Gas stove, pots, and utensils",
-        items: [
-          { id: "i004", name: "Portable Gas Stove", completed: false },
-          { id: "i005", name: "Cooking Pots Set", completed: false },
-          { id: "i006", name: "Camping Utensils", completed: true },
-          { id: "i007", name: "Cooler", completed: false },
-        ],
-      },
-      {
-        id: "w003",
-        title: "Outdoor Gear",
-        description: "For activities and exploration",
-        items: [
-          { id: "i008", name: "Hiking Boots", completed: true },
-          { id: "i009", name: "Backpacks", completed: true },
-          { id: "i010", name: "Water Bottles", completed: true },
-        ],
-      },
-    ],
-  },
-  {
-    id: "g654321",
-    name: "Office Buddies",
-    profile_pic: "https://i.pravatar.cc/100?img=23",
-    memberCount: 12,
-    description: "Workplace team building and activities",
-    wishlists: [
-      {
-        id: "w004",
-        title: "Office Party Supplies",
-        description: "For the summer event",
-        items: [
-          { id: "i011", name: "Decorations", completed: false },
-          { id: "i012", name: "Paper Plates & Cups", completed: false },
-        ],
-      },
-    ],
-  },
-];
-
 export default function GroupPage() {
   const { id } = useLocalSearchParams();
-  const group = sampleGroups.find((g) => g.id === id) || sampleGroups[0]; // Default to first group if not found
+  const groupId = Array.isArray(id) ? id[0] : id ?? '';
+  //const group = sampleGroups.find((g) => g.id === id) || sampleGroups[0]; // Default to first group if not found
   const theme = useColorScheme();
   const scrollY = useRef(new Animated.Value(0)).current;
-  const [expandedWishlist, setExpandedWishlist] = useState(null);
+  const [expandedWishlist, setExpandedWishlist] = useState<string|null>(null);
   const [addItemModalVisible, setAddItemModalVisible] = useState(false);
   const [addWishlistModalVisible, setAddWishlistModalVisible] = useState(false);
-  const [currentWishlistId, setCurrentWishlistId] = useState(null);
+  const [currentWishlistId, setCurrentWishlistId] = useState<string|null>(null);
   const [newItemName, setNewItemName] = useState("");
   const [newWishlistName, setNewWishlistName] = useState("");
   const [newWishlistDescription, setNewWishlistDescription] = useState("");
-  const [wishlists, setWishlists] = useState(group?.wishlists || []);
+  //const [wishlists, setWishlists] = useState(group?.wishlists || []);
+  const [groupWishlists, setGroupWishlists] = useState<GroupWishlistInfo|null>(null)
+  const profilePic =
+    groupWishlists?.profile_pic && groupWishlists?.profile_pic
+      ? imageMap[groupWishlists?.profile_pic] || require("@/assets/images/default.jpg")
+      : require("@/assets/images/default.jpg");
 
-  // Update local wishlists when group changes
-  useEffect(() => {
-    if (group) {
-      setWishlists(group.wishlists);
-    }
-  }, [group]);
+  useEffect(()=>{
+    getGroupWishlistInfo(groupId,setGroupWishlists)
+  },[])
 
   const isDark = theme === "dark";
   const colors = useMemo(
-    () => ({
-      background: isDark ? "#000" : "#f7f7f7",
-      textPrimary: isDark ? "#fff" : "#111",
-      textSecondary: isDark ? "#a0a0a0" : "#6e6e6e",
-      card: isDark ? "rgba(30, 30, 33, 0.8)" : "rgba(255, 255, 255, 0.85)",
-      cardBorder: isDark ? "#2c2c2e" : "#e1e1e1",
-      headerGradient: isDark
+    () => {
+      const headerGradient:[ColorValue, ColorValue, ColorValue] =  isDark
         ? ["rgba(0,0,0,0.9)", "rgba(0,0,0,0.6)", "rgba(0,0,0,0)"]
         : [
             "rgba(247,247,247,0.9)",
             "rgba(247,247,247,0.6)",
             "rgba(247,247,247,0)",
-          ],
-      buttonGradient: isDark
-        ? ["#7047eb", "#4F46E5", "#3832a8"]
-        : ["#6366F1", "#4F46E5", "#4338CA"],
-      checkboxEmpty: isDark ? "#3a3a3c" : "#d1d1d6",
-      checkboxFilled: isDark ? "#4F46E5" : "#4F46E5",
-      cardShadow: isDark ? "rgba(0, 0, 0, 0.3)" : "rgba(0, 0, 0, 0.1)",
-      addItemButton: isDark ? "#2c2c2e" : "#f2f2f2",
-      modalBackground: isDark ? "#1c1c1e" : "#ffffff",
-      input: isDark ? "#2c2c2e" : "#f2f2f2",
-      inputText: isDark ? "#ffffff" : "#000000",
-      divider: isDark ? "#2c2c2e" : "#e1e1e1",
-      completed: isDark ? "#505050" : "#a0a0a0",
-    }),
-    [isDark]
-  );
+          ]
+      const buttonGradient:[ColorValue, ColorValue, ColorValue] = isDark
+      ? ["#7047eb", "#4F46E5", "#3832a8"]
+      : ["#6366F1", "#4F46E5", "#4338CA"]
+
+      return {
+        headerGradient,
+        buttonGradient,
+        background: isDark ? "#000" : "#f7f7f7",
+        textPrimary: isDark ? "#fff" : "#111",
+        textSecondary: isDark ? "#a0a0a0" : "#6e6e6e",
+        card: isDark ? "rgba(30, 30, 33, 0.8)" : "rgba(255, 255, 255, 0.85)",
+        cardBorder: isDark ? "#2c2c2e" : "#e1e1e1",      
+        checkboxEmpty: isDark ? "#3a3a3c" : "#d1d1d6",
+        checkboxFilled: isDark ? "#4F46E5" : "#4F46E5",
+        cardShadow: isDark ? "rgba(0, 0, 0, 0.3)" : "rgba(0, 0, 0, 0.1)",
+        addItemButton: isDark ? "#2c2c2e" : "#f2f2f2",
+        modalBackground: isDark ? "#1c1c1e" : "#ffffff",
+        input: isDark ? "#2c2c2e" : "#f2f2f2",
+        inputText: isDark ? "#ffffff" : "#000000",
+        divider: isDark ? "#2c2c2e" : "#e1e1e1",
+        completed: isDark ? "#505050" : "#a0a0a0",
+      }
+
+    },[isDark]);
 
   // Header animations
   const headerHeight = scrollY.interpolate({
@@ -160,75 +114,43 @@ export default function GroupPage() {
   });
 
   // Toggle wishlist expansion
-  const toggleWishlist = (wishlistId) => {
+  const toggleWishlist = (wishlistId:string) => {
     setExpandedWishlist(expandedWishlist === wishlistId ? null : wishlistId);
   };
 
   // Toggle item completion
-  const toggleItemCompletion = (wishlistId, itemId) => {
-    setWishlists((currentWishlists) =>
-      currentWishlists.map((wishlist) => {
-        if (wishlist.id === wishlistId) {
-          return {
-            ...wishlist,
-            items: wishlist.items.map((item) =>
-              item.id === itemId
-                ? { ...item, completed: !item.completed }
-                : item
-            ),
-          };
-        }
-        return wishlist;
-      })
-    );
+  const toggleItemCompletion = async(wishlistId:string, itemId:string) => {
+    const currentWishlist = groupWishlists?.wishlists.find((w) => w.id === wishlistId);
+    const item = currentWishlist?.items.find((i) => i.id === itemId);
+    if (!item) return;
+
+    await checkOffItem(itemId, item.completed);
+    await getGroupWishlistInfo(groupId,setGroupWishlists)
   };
 
   // Open add item modal
-  const openAddItemModal = (wishlistId) => {
+  const openAddItemModal = (wishlistId:string) => {
     setCurrentWishlistId(wishlistId);
     setNewItemName("");
     setAddItemModalVisible(true);
   };
 
   // Add new item
-  const addNewItem = () => {
+  const addNewItem = async() => {
     if (newItemName.trim() === "" || !currentWishlistId) return;
-
-    setWishlists((currentWishlists) =>
-      currentWishlists.map((wishlist) => {
-        if (wishlist.id === currentWishlistId) {
-          return {
-            ...wishlist,
-            items: [
-              ...wishlist.items,
-              {
-                id: `i${Date.now()}`,
-                name: newItemName.trim(),
-                completed: false,
-              },
-            ],
-          };
-        }
-        return wishlist;
-      })
-    );
-
+    //const currentWishlist = groupWishlists?.wishlists.find((w) => w.id === currentWishlistId);
+    await editWishlist(currentWishlistId,newItemName,'-')
+    await getGroupWishlistInfo(groupId,setGroupWishlists)
     setAddItemModalVisible(false);
     setNewItemName("");
   };
 
   // Add new wishlist
-  const addNewWishlist = () => {
+  const addNewWishlist = async() => {
     if (newWishlistName.trim() === "") return;
-
-    const newWishlist = {
-      id: `w${Date.now()}`,
-      title: newWishlistName.trim(),
-      description: newWishlistDescription.trim() || "No description",
-      items: [],
-    };
-
-    setWishlists((currentWishlists) => [...currentWishlists, newWishlist]);
+    const newWishlist = await createWishlistGroup(groupId,newWishlistName,newWishlistDescription)
+    await getGroupWishlistInfo(groupId,setGroupWishlists)
+    //setWishlists((currentWishlists) => [...currentWishlists, newWishlist]);
     setAddWishlistModalVisible(false);
     setNewWishlistName("");
     setNewWishlistDescription("");
@@ -248,7 +170,7 @@ export default function GroupPage() {
     return (completedItems / items.length) * 100;
   };
 
-  if (!group) {
+  if (!groupId) {
     return (
       <ThemedView style={styles.centered}>
         <ThemedText style={styles.errorText}>Group not found.</ThemedText>
@@ -287,7 +209,7 @@ export default function GroupPage() {
           <ThemedText
             style={[styles.headerTitleText, { color: colors.textPrimary }]}
           >
-            {group.name}
+            {groupWishlists?.name ?? ''}
           </ThemedText>
         </Animated.View>
 
@@ -301,24 +223,17 @@ export default function GroupPage() {
           ]}
         >
           <Image
-            source={{ uri: group.profile_pic }}
+            source={profilePic}
             style={styles.groupImage}
           />
           <ThemedText style={[styles.groupName, { color: colors.textPrimary }]}>
-            {group.name}
+            {groupWishlists?.name ?? ''}
           </ThemedText>
           <ThemedText
             style={[styles.groupMeta, { color: colors.textSecondary }]}
           >
-            {group.memberCount} members
+            {groupWishlists?.memberCount ?? 0} members
           </ThemedText>
-          {group.description && (
-            <ThemedText
-              style={[styles.groupDescription, { color: colors.textSecondary }]}
-            >
-              {group.description}
-            </ThemedText>
-          )}
         </Animated.View>
       </Animated.View>
 
@@ -356,7 +271,7 @@ export default function GroupPage() {
         </View>
 
         {/* Wishlists */}
-        {wishlists.map((wishlist) => {
+        {groupWishlists?.wishlists.map((wishlist) => {
           const progress = getWishlistProgress(wishlist.items);
           const isExpanded = expandedWishlist === wishlist.id;
 
@@ -438,7 +353,7 @@ export default function GroupPage() {
                     ]}
                   />
 
-                  {wishlist.items && wishlist.items.length > 0 ? (
+                  {wishlist && wishlist.items.length > 0 ? (
                     wishlist.items.map((item) => (
                       <TouchableOpacity
                         key={item.id}
@@ -1011,3 +926,64 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+
+/*const sampleGroups = [
+  {
+    id: "g123456",
+    name: "Camping Crew",
+    profile_pic: "https://i.pravatar.cc/100?img=8",
+    memberCount: 8,
+    description: "Planning our annual trip to Yosemite National Park",
+    wishlists: [
+      {
+        id: "w001",
+        title: "Tent Equipment",
+        description: "All camping essentials for shelter",
+        items: [
+          { id: "i001", name: "4-Person Tent", completed: false },
+          { id: "i002", name: "Sleeping Bags", completed: true },
+          { id: "i003", name: "Inflatable Mattress", completed: false },
+        ],
+      },
+      {
+        id: "w002",
+        title: "Cooking Tools",
+        description: "Gas stove, pots, and utensils",
+        items: [
+          { id: "i004", name: "Portable Gas Stove", completed: false },
+          { id: "i005", name: "Cooking Pots Set", completed: false },
+          { id: "i006", name: "Camping Utensils", completed: true },
+          { id: "i007", name: "Cooler", completed: false },
+        ],
+      },
+      {
+        id: "w003",
+        title: "Outdoor Gear",
+        description: "For activities and exploration",
+        items: [
+          { id: "i008", name: "Hiking Boots", completed: true },
+          { id: "i009", name: "Backpacks", completed: true },
+          { id: "i010", name: "Water Bottles", completed: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: "g654321",
+    name: "Office Buddies",
+    profile_pic: "https://i.pravatar.cc/100?img=23",
+    memberCount: 12,
+    description: "Workplace team building and activities",
+    wishlists: [
+      {
+        id: "w004",
+        title: "Office Party Supplies",
+        description: "For the summer event",
+        items: [
+          { id: "i011", name: "Decorations", completed: false },
+          { id: "i012", name: "Paper Plates & Cups", completed: false },
+        ],
+      },
+    ],
+  },
+];*/

@@ -354,6 +354,100 @@ def get_group(group_id):
             'profile_pic': group[3]
         })
     return jsonify({'error': 'Group not found'}), 404
+#get groups by multiple IDS
+@app.route('/groups/multiple',methods=['POST'])
+def get_multiple_groups():
+    data = request.get_json()
+    if not data or not isinstance(data, list):
+            return jsonify({'error': 'Expected a JSON array of group IDs'}), 400
+    placeholders = ','.join(['%s'] * len(data))
+    query = f"""
+        SELECT g.id, g.name, g.created_at, g.profile_pic, COUNT(gm.user_id) as member_count
+        FROM groups g
+        LEFT JOIN group_members gm ON g.id = gm.group_id
+        WHERE g.id IN ({placeholders})
+        GROUP BY g.id
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(query, tuple(data))
+    groups = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    result = [{
+        'id': group[0],
+        'name': group[1],
+        'created_at': group[2],
+        'profile_pic': group[3],
+        'member_count':group[4]
+    } for group in groups]
+    return jsonify(result)
+
+# get group info
+
+@app.route('/<string:group_id>/details', methods=['GET'])
+def get_group_details(group_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Fetch the group
+    cursor.execute("""
+        SELECT g.id, g.name, g.profile_pic, g.created_at,
+            (SELECT COUNT(*) FROM group_members gm WHERE gm.group_id = g.id) AS member_count
+        FROM groups g
+        WHERE g.id = %s
+    """, (group_id,))
+    group = cursor.fetchone()
+
+    if not group:
+        cursor.close()
+        conn.close()
+        return jsonify({'error': 'Group not found'}), 404
+
+    # Fetch all wishlists for the group
+    cursor.execute("""
+        SELECT id, title, description
+        FROM wishlists
+        WHERE owner_group_id = %s
+    """, (group_id,))
+    wishlists_raw = cursor.fetchall()
+
+    wishlists = []
+    for wl in wishlists_raw:
+        wishlist_id = wl[0]
+
+        # Fetch all items for this wishlist
+        cursor.execute("""
+            SELECT item_id, name, completed
+            FROM wishlists_items
+            WHERE wishlist_id = %s
+        """, (wishlist_id,))
+        items = [
+            {"id": i[0], "name": i[1], "completed": i[2]}
+            for i in cursor.fetchall()
+        ]
+
+        wishlists.append({
+            "id": wl[0],
+            "title": wl[1],
+            "description": wl[2],
+            "items": items
+        })
+
+    cursor.close()
+    conn.close()
+
+    return jsonify({
+        "id": group[0],
+        "name": group[1],
+        "profile_pic": group[2],
+        "description": group[3],
+        "memberCount": group[4],
+        "wishlists": wishlists
+    })
+
+
 
 # Create a new group
 import random

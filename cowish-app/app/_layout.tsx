@@ -83,6 +83,8 @@ export default function RootLayout() {
               <Stack.Screen name="confirm-group"/>
               <Stack.Screen name="confirm-individual"/>
               <Stack.Screen name="wishlist/[id]"/>
+              <Stack.Screen name="individual-wishlists"/>
+              <Stack.Screen name="group-wishlists"/>
             </>
           ) : (
             <Stack.Screen name="(auth)" />

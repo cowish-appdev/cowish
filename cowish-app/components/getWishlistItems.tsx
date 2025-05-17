@@ -9,7 +9,11 @@ export default function getWishlistItems(wishlist_id:string,setItems:Function){
             }
             const data = await response.json();
             console.log("hey",data)
-            setItems(data);
+            const finalData = data.map((item:any) => ({
+                  ...item,
+                  item_id: String(item.item_id)  // Convert item_id to string
+              }));
+            setItems(finalData);
         }catch(error){
             console.error('Fetch group failed: ',error);
             throw error;

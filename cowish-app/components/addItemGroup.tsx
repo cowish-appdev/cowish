@@ -1,5 +1,5 @@
 
-export default function editSelfWishlist(wishlist_id:string,name:string,description:string|null){
+export default function addItemGroup(wishlist_id:string,name:string,description:string|null){
     const editSelfWishlist = async (wishlist_id:string,name:string,description:string|null) => {
         try {
           const updateFields = {
