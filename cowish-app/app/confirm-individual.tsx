@@ -57,6 +57,7 @@ export default function ConfirmPage() {
         useNativeDriver: true,
       }).start(() => {
         setShowPopup(false);
+        //setTimeout(() => setShowPopup(false), 1000);
         router.push("/(tabs)/shared");
       });
     }, 2000);

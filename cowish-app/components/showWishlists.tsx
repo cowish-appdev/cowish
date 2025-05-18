@@ -24,8 +24,9 @@ const cardMarginHorizontal = 6;
 const availableWidth = screenWidth - containerPaddingHorizontal * 2;
 const cardWidth = availableWidth / numColumns - cardMarginHorizontal * 2; 
 
-export default function FriendList({ filter ,friends}: { filter: string, friends:Friends[]|[]}) {
-  const [friends_info,setFriendsInfo] = useState<friend_wishlist_info[]|[]>([])
+export default function FriendList({ filter ,friends}: { filter: string, friends:friend_wishlist_info[]}) {
+  //const [friends_info,setFriendsInfo] = useState<friend_wishlist_info[]|[]>([])
+  //const [loading, setLoading] = useState(false)
   const theme = useColorScheme();
   const tagMap: {[key:string]:string} = {
     "Friends" : 'friend',
@@ -35,13 +36,8 @@ export default function FriendList({ filter ,friends}: { filter: string, friends
     "Significant Other": "significant-other"
   }
   const filteredUsers =
-    filter === "All" ? friends_info : friends_info.filter((u) => u.tag === tagMap[filter]);
-  console.log("friends2:", friends)
-  useEffect(()=>{
-    getFriendInfo(friends,setFriendsInfo)
-  },[])
+    filter === "All" ? friends : friends.filter((u) => u.tag === tagMap[filter]);
   console.log("f",friends)
-  console.log("i",friends_info)
   const renderCard = ({ item }: { item: friend_wishlist_info}) => (
     <View
       style={[

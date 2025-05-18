@@ -10,10 +10,11 @@ export default function getFriends(user_uuid:string,setFriends:Function){
             const data = await response.json();
             console.log(data)
             setFriends(data);
+            return data;
         }catch(error){
             console.error('Fetch group failed: ',error);
             throw error;
         }
     }
-    getFriends(user_uuid,setFriends)
+    return getFriends(user_uuid,setFriends)
 }

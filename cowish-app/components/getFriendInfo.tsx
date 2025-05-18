@@ -19,7 +19,7 @@ export default function getFriendInfo(friends: Friends[]|[],setFriendsInfo:Funct
                 throw new Error('Network responser was not ok');
             }
             const data = await response.json();
-            setFriendsInfo(data);
+            setFriendsInfo(data.result);
         }catch(error){
             console.error('Fetch user failed: ',error);
             throw error;

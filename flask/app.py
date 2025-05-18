@@ -77,8 +77,11 @@ def get_user(uuid):
 @app.route('/get-users-wishlist-info',methods=["POST"])
 def users_wishlist_info():
     data = request.get_json()
+    print(data)
+    print(len(data))
+    print(isinstance(data,list))
     if not isinstance(data, list) or len(data)==0:
-        return jsonify({"error":"No UUIDs provided"}),200
+        return jsonify({"message":"No UUIDs provided", "result":[]}),200
     uuid_tag_map = {entry["friend_id"]: entry["tag"] for entry in data if "friend_id" in entry and "tag" in entry}
     uuid_list = list(uuid_tag_map.keys())
     if len(uuid_list)==0:
@@ -119,7 +122,7 @@ def users_wishlist_info():
             "tag":tag
             })
         if len(results) > 0:
-            return jsonify(results),200
+            return jsonify({"result": results}),200
         else:
             return jsonify({"message":"No matching users found",
                         "result":[]},200)
