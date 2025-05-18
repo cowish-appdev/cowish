@@ -1,15 +1,19 @@
 // firebase.ts
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider} from "firebase/auth";
+import { EXPO_apiKey, EXPO_authDomain,
+    EXPO_projectId,EXPO_storageBucket,
+    EXPO_messagingSenderId, EXPO_appId} from '@env';
 
 // Your web app's Firebase configuration
+console.log(EXPO_apiKey)
 const firebaseConfig = {
-    apiKey: "AIzaSyAkqyA57SQ9yxK1JrPn2TRvW-jo4KvwDWo",
-    authDomain: "cowish-dc248.firebaseapp.com",
-    projectId: "cowish-dc248",
-    storageBucket: "cowish-dc248.firebasestorage.app",
-    messagingSenderId: "928744915623",
-    appId: "1:928744915623:web:0d4263e057ffbecbecd182"
+    apiKey: EXPO_apiKey,
+    authDomain: EXPO_authDomain,
+    projectId: EXPO_projectId,
+    storageBucket: EXPO_storageBucket,
+    messagingSenderId: EXPO_messagingSenderId,
+    appId: EXPO_appId
 };
 
 // Initialize Firebase

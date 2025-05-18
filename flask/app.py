@@ -2,15 +2,14 @@ import psycopg2
 import psycopg2.extras
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from dotenv import load_dotenv
+import os
 app = Flask(__name__)
 CORS(app)
 # Database connection parameters
-DB_HOST = 'yamabiko.proxy.rlwy.net'
-DB_PORT = '11814'
-DB_NAME = 'railway'
-DB_USER = 'postgres'
-DB_PASSWORD = 'ydPuEVyxHqnueTxpTIqgXTRInvobUVBZ'
-DATABASE_URL = 'postgresql://postgres:ydPuEVyxHqnueTxpTIqgXTRInvobUVBZ@yamabiko.proxy.rlwy.net:11814/railway'
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 
 # Function to connect to the PostgreSQL database
 def get_db_connection():
