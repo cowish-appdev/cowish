@@ -1,5 +1,5 @@
 import { User } from "@/interface";
-export default function createWishlistUser(user:User,setWishlist:Function){
+export default function createWishlistUser(user:User){
     const createWishlistUser = async(user:User)=>{
         try {
             const response = await fetch(`http://127.0.0.1:5000/wishlists/user`,
@@ -19,12 +19,12 @@ export default function createWishlistUser(user:User,setWishlist:Function){
                 throw new Error('Network responser was not ok');
             }
             const data = await response.json();
-            setWishlist(data.wishlists)
-            console.log(data)
+            console.log("test",data.wishlists[0])
+            return data.wishlists[0];
         }catch(error){
             console.error('Fetch user failed: ',error);
             throw error;
         }
     }
-    createWishlistUser(user)
+    return createWishlistUser(user)
 }

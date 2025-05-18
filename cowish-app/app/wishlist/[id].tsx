@@ -66,18 +66,24 @@ export default function WishlistPage() {
       setWishlist(data);
       setLoadingWishlist(false)
     })
-    getWishlistItems(wishlistId,(data: WishlistItems[]|[])=>{
-      setWishlistItems(data);
+    const fetch =async ()=>{
+      const items = await getWishlistItems(wishlistId)
+      setWishlistItems(items.sort((a:WishlistItems, b:WishlistItems) => {
+        return a.item_id.localeCompare(b.item_id);
+    }));
       setLoadingItems(false)
-    })
+    }
+    fetch()
   },[])
   useEffect(()=>{
-    if(Wishlist&&Wishlist.owner_user_id){
-      getUserById(Wishlist?.owner_user_id ?? '', (userData: User)=>{
-        setOwnerInfo(userData);
+    const fetchowner = async ()=>{
+      if(Wishlist&&Wishlist.owner_user_id){
+        const thisUser = await getUserById(Wishlist?.owner_user_id ?? '')
+        setOwnerInfo(thisUser);
         setLoadingOwner(false)
-      })
+      }
     }
+    fetchowner()
   },[Wishlist])
   console.log("w:",Wishlist)
   console.log("owner:", ownerInfo)
@@ -89,11 +95,10 @@ export default function WishlistPage() {
       await checkOffItem(item.item_id, item.completed)
         if (Wishlist && Wishlist.id) {
           // Refetch updated items
-          await getWishlistItems(Wishlist.id, (data: WishlistItems[]) => {
-            setWishlistItems(data.sort((a, b) => {
+          const items = await getWishlistItems(Wishlist.id)
+          setWishlistItems(items.sort((a:WishlistItems, b:WishlistItems) => {
               return a.item_id.localeCompare(b.item_id);
-            }));
-          });
+          }));
       };
     }
     /*setWishlistItems((prev) =>

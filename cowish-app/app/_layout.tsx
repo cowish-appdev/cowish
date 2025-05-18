@@ -17,6 +17,7 @@ import { User, onAuthStateChanged} from "firebase/auth";
 import {auth, provider} from "./firebase";
 import { User as user} from "@/interface";
 import getUserById from "@/components/getUserById";
+import addUser from "@/components/addUser";
 
 
 
@@ -51,20 +52,32 @@ export default function RootLayout() {
 
   // Simulate checking auth status (replace with real listener)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: User|null)=>{
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User|null)=>{
       if(firebaseUser){
-        getUserById(firebaseUser.uid,setUserAcc)
+        const response = await getUserById(firebaseUser.uid)
+        console.log('response: ',response)
+        if(!response){
+          const newUser = await addUser(firebaseUser.uid, firebaseUser.displayName ?? 'no-name',firebaseUser.email??'none','dog1')
+          const verify = await getUserById(newUser.uuid);
+          console.log("verify in DB", verify)
+          setUserAcc(newUser)
+        }
+        else{
+          setUserAcc(response)
+        }
         SplashScreen.hideAsync();
       }
       else{
         setUserAcc(null)
       }
       setLoading(false);
+      //console.log("hello",userAcc)
+      //setLoading(false);
     })
     return unsubscribe;
   }, []);
 
-  if (loading) {
+  if (loading||userAcc===undefined) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />

@@ -1,6 +1,6 @@
 
-export default function addUser(uuid:string,username:string, email:string,profile_pic:string,setUser:Function){
-    const addUser = async(uuid:string,username:string, email:string,profile_pic:string,setUser:Function)=>{
+export default function addUser(uuid:string,username:string, email:string,profile_pic:string){
+    const addUser = async(uuid:string,username:string, email:string,profile_pic:string)=>{
         try {
             const response = await fetch(`http://127.0.0.1:5000/users`,{
                 method:'POST',
@@ -19,11 +19,13 @@ export default function addUser(uuid:string,username:string, email:string,profil
                 throw new Error('Network responser was not ok');
             }
             const data = await response.json();
-            setUser(data.user);
+            console.log(data)
+            console.log("user ",data.users[0])
+            return data.users[0];
         }catch(error){
             console.error('Fetch user failed: ',error);
             throw error;
         }
     }
-    addUser(uuid,username,email,profile_pic,setUser)
+    return addUser(uuid,username,email,profile_pic)
 }

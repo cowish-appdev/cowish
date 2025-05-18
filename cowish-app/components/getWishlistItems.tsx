@@ -1,6 +1,6 @@
 
-export default function getWishlistItems(wishlist_id:string,setItems:Function){
-    const getWishlistItems = async(wishlist_id:string,setItems:Function)=>{
+export default function getWishlistItems(wishlist_id:string){
+    const getWishlistItems = async(wishlist_id:string)=>{
         try {
             const response = await fetch(`http://127.0.0.1:5000/wishlists_items/wishlist/${wishlist_id}`)
             console.log(response.ok)
@@ -13,11 +13,11 @@ export default function getWishlistItems(wishlist_id:string,setItems:Function){
                   ...item,
                   item_id: String(item.item_id)  // Convert item_id to string
               }));
-            setItems(finalData);
+            return finalData;
         }catch(error){
             console.error('Fetch group failed: ',error);
-            throw error;
+            return []
         }
     }
-    getWishlistItems(wishlist_id,setItems)
+    return getWishlistItems(wishlist_id)
 }

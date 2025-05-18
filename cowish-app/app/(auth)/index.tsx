@@ -33,7 +33,6 @@ export default function LogInPage() {
       const user = result.user;
 
       console.log("User Info:", user);
-      addUser(user.uid, user.displayName ?? 'no-name',user.email??'none','dog1',setUserAcc)
       /*setUserAcc({
         uuid: user.uid,
         username: user.displayName ?? 'no-name',

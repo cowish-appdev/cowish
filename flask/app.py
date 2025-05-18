@@ -64,7 +64,7 @@ def get_user(uuid):
     conn.close()
 
     if user:
-        return jsonify({
+        return jsonify({'response':{
             'uuid': user[0],
             'username': user[1],
             'email': user[2],
@@ -72,8 +72,8 @@ def get_user(uuid):
             'create_at': user[4],
             'update_at': user[5],
             'profile_pic': user[6]
-        })
-    return jsonify({'error': 'User not found','response':[]}), 404
+        }})
+    return jsonify({'error': 'User not found','response':None}), 200
 @app.route('/get-users-wishlist-info',methods=["POST"])
 def users_wishlist_info():
     data = request.get_json()
@@ -173,8 +173,7 @@ def create_users():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    inserted_users = []
-    existing_users = []
+    all_users=[]
 
     for user in users:
         uuid = user.get('uuid')
@@ -200,13 +199,9 @@ def create_users():
                 "profile_pic": existing_user[6],
             }
 
-            if isinstance(data, dict):  # single user request
-                cursor.close()
-                conn.close()
-                return jsonify({"message": "User already exists", "user": user_data}), 200
-            else:
-                existing_users.append(user_data)
-                continue
+            all_users.append(user_data)
+            continue
+
 
         # Generate unique 6-character code
         while True:
@@ -219,19 +214,30 @@ def create_users():
             '''
             INSERT INTO users (uuid, username, email, code, profile_pic)
             VALUES (%s, %s, %s, %s, %s)
-            RETURNING uuid;
+            RETURNING uuid,username, email, code, create_at, update_at, profile_pic;
             ''',
             (uuid, username, email, code, profile_pic)
         )
-        inserted_users.append(cursor.fetchone()[0])
+        new_user = cursor.fetchone()
+        user_data = {
+            "uuid": new_user[0],
+            "username": new_user[1],
+            "email": new_user[2],
+            "code": new_user[3],
+            "create_at": new_user[4],
+            "update_at": new_user[5],
+            "profile_pic": new_user[6],
+        }
+
+        all_users.append(user_data)
+    
 
     conn.commit()
     cursor.close()
     conn.close()
 
     return jsonify({
-        "inserted_users": inserted_users,
-        "existing_users": existing_users if existing_users else None
+        "users": all_users,
     }), 201
 
 
@@ -753,10 +759,19 @@ def create_user_wishlists():
     conn.commit()
     cursor.close()
     conn.close()
-
+    wishlist_json = [
+    {
+        "id": row[0],
+        "title": row[1],
+        "description": row[2],
+        "owner_user_id": row[3],
+        "owner_group_id": row[4]
+    }
+    for row in inserted_data
+    ]
     return jsonify({
         "message": "User-owned wishlist(s) created successfully",
-        "wishlists": inserted_data
+        "wishlists": wishlist_json
     }), 201
 
 
@@ -859,17 +874,17 @@ def get_user_wishlists(user_id):
 
     if wishlist:
         return jsonify(
-            {
+            {'result': {
                 'id': wishlist[0],
                 'title': wishlist[1],
                 'description': wishlist[2],
                 'owner_user_id': wishlist[3],
                 'owner_group_id': wishlist[4],
         
-            }
+            }}
         ),200
     else:
-        return jsonify({"error": "No wishlists found for this user"}), 404
+        return jsonify({'result':None}), 200
 
 
 # Get wishlist owner_group_id

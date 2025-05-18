@@ -49,26 +49,25 @@ export default function ProfileScreen() {
   const [newItemName, setNewItemName] = useState("");
   const [newItemDesc, setNewItemDesc] = useState("");
   
-  
   useEffect(()=>{
     if(userAcc){
       setUserLoading(false)
     }
   },[userAcc])
+  console.log("who",userAcc)
   useEffect(()=>{
-    if(!userAcc) return;
+    if(!userAcc || !userAcc.uuid) return;
 
     const fetchWishlist = async () => {
       try {
-        await getWishlistByUser(userAcc.uuid, (wishlistData:Wishlist) => {
-          if (wishlistData) {
-            setYourWishlist(wishlistData);
+        const userWishlist = await getWishlistByUser(userAcc.uuid)
+          if (userWishlist) {
+            setYourWishlist(userWishlist);
           } else {
-            createWishlistUser(userAcc, (createdWishlist:Wishlist) => {
-              setYourWishlist(createdWishlist);
-            });
+            console.log(userAcc)
+            const newWishlist = await createWishlistUser(userAcc);
+            setYourWishlist(newWishlist);
           }
-        });
       } finally {
         setLoadingWishlist(false);
       }
@@ -78,40 +77,39 @@ export default function ProfileScreen() {
 
   useEffect(() => {
   const fetchItems = async () => {
-    if (YourWishlist?.id) {
-      await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
-        setWishlistItems(data.sort((a, b) => {
-          return Number(b.item_id) - Number(a.item_id);
-        }));
-        setLoadItems(false);
-      });
-    }
+    if (!YourWishlist?.id) return;
+    try{
+      const items = await getWishlistItems(YourWishlist.id);
+      setWishlistItems(
+        items.sort((a:WishlistItems, b:WishlistItems) => Number(b.item_id) - Number(a.item_id))
+      );
+    }finally{
+      setLoadItems(false);
+    }     
   };
   fetchItems();
 }, [YourWishlist]);
 
-  const handleToggleComplete = async (item: WishlistItems) => {
+const handleToggleComplete = async (item: WishlistItems) => {
       await checkOffItem(item.item_id, item.completed)
       if (YourWishlist && YourWishlist.id) {
         // Refetch updated items
-        await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
-          setWishlistItems(data.sort((a, b) => {
-            return Number(b.item_id) - Number(a.item_id);
-          }));
-        });
-    };
-  }
+        const items = await getWishlistItems(YourWishlist.id);
+        setWishlistItems(
+          items.sort((a:WishlistItems, b:WishlistItems) => Number(b.item_id) - Number(a.item_id))
+        );
+      }
+  };
   const editYourWishlist = async (wishlist_id:string,name:string,desc:string|null)=>{
     await editWishlist(wishlist_id,name,desc)
     if (YourWishlist && YourWishlist.id) {
       // Refetch updated items
-      await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
-        setWishlistItems(data.sort((a,b)=>{
-          return Number(b.item_id) - Number(a.item_id)
-        }));
-      });
+      const items = await getWishlistItems(YourWishlist.id)
+      setWishlistItems(
+        items.sort((a:WishlistItems,b:WishlistItems)=> Number(b.item_id) - Number(a.item_id))
+      );
     };
-  }
+  };
   const handleDelete = async (item_id:string)=>{
     const response = await fetch(`http://127.0.0.1:5000/wishlists_items/${item_id}`,{
       method:"DELETE",
@@ -122,16 +120,18 @@ export default function ProfileScreen() {
     }
     if (YourWishlist && YourWishlist.id) {
       // Refetch updated items
-      await getWishlistItems(YourWishlist.id, (data: WishlistItems[]) => {
-        setWishlistItems(data.sort((a,b)=>{
-          return Number(b.item_id) - Number(a.item_id)
-        }));
-      });
+      const items = await getWishlistItems(YourWishlist.id)
+      setWishlistItems(
+        items.sort((a:WishlistItems,b:WishlistItems)=>Number(b.item_id) - Number(a.item_id))
+      );
     };
   }
   console.log(userAcc)
-  console.log(YourWishlist)
-  console.log(WishlistItems)
+  console.log("wishlist",YourWishlist)
+  console.log("items",WishlistItems)
+  console.log(loading)
+  console.log(loadItems)
+  console.log(loadWishlist)
   return (
     <View style = {{flex:1}}>{
       loading || loadItems||loadWishlist ? (
